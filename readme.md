@@ -11,3 +11,5 @@ Exploracion de variables, Descripción de Variables
 
 
 [Archivo Final PDF](https://github.com/Jose-Prince/Proyecto3-Mineria-de-datos/blob/main/Avances%20Proyecto%203.pdf)
+
+[Denominaciones de las variables codigo valor](https://github.com/Jose-Prince/Proyecto3-Mineria-de-datos/blob/main/VariablesEtiquetas.xlsx)

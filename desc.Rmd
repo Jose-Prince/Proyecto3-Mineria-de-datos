@@ -1,0 +1,73 @@
+---
+title: "Descripcion Variables"
+author: "Andre Jo 22199"
+date: "2025-03-24"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r setup, include=FALSE}
+library(dplyr)
+
+
+```
+
+
+```{r }
+datos <- read.csv("merged_output.csv")
+
+head(datos)
+
+```
+
+
+```{r }
+colnames(datos)
+```
+
+Descripción de Variables
+
+DEPREG  - Departamento de registro 
+Representa el departamento en el cual se registró el evento o hecho.(1-22)
+
+MUPREG  - Municipio de registro
+Representa el departamento en el cual se registró el evento o hecho.
+
+
+MESREG  - Mes de registro
+AÑOREG  - Año de registro
+DIAOCU  - Dia de ocurrencia
+MESOCU  - Mes de ocurrencia
+AÑOOCU  - Año ocurrencia
+DEPOCU  - Departamento de Ocurrencia
+MUPOCU  - Municipio de ocurrencia
+EDADHOM - Edad del hombre
+EDADMUJ - Edad de la Mujer
+PUEHOM  - Pueblo de pertenencia del hombre
+PUEMUJ  - Pueblo de pertenencia de la mujer
+NACHOM  - Nacionalidad del hombre
+NACMUJ  - Nacionalidad de la mujer
+ESCHOM  - Escolaridad del hombre
+ESCMUJ  - Escolaridad de la mujer
+CIUOHOM - Ocupación (Subgrupos, CIUO-08) del hombre
+CIUOMUJ - Ocupación (Subgrupos, CIUO-08) de la mujer 
+
+Se observa tambien que las variables estan denotadas por codigo lo cual se tiene que utilizar excel de definicion de variables para saber la etiqueta. 
+
+```{r }
+length(colnames(datos))
+
+nrow(datos)
+```
+Se observa que hay un total de 19 variables a medir. De estas existen 7 variables que son númericas y 12 variables que son categoricas. Ademas de eso contamos con más de 81826 filas de registros dentro del rango de años 2012 a 2024. 
+
+
+```{r }
+summary(datos)
+```
+Se observa que hay un total de 19 variables a medir. De estas existen 7 variables que son númericas y 12 variables que son categoricas. 
+

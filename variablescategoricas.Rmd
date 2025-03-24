@@ -1,12 +1,12 @@
 ---
 title: "Variables Categoricas"
-author: "Andre Jo 22199"
+author: "Andre Jo 22199, Nelson Escalante 22046, Jose Prince 22087"
 date: "2025-03-24"
 output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = FALSE)
 library(dplyr)
 library(ggplot2)
 ```
@@ -15,6 +15,109 @@ library(ggplot2)
 ```{r }
 datos <- read.csv("merged_output.csv")
 
+```
+
+Se decodificaran las variables categoricas con el proposito de que el analisis sea mas claro.
+```{r}
+dep_decod <- c(
+  "1" =	"Guatemala",
+  "2"	= "El Progreso",
+  "3" =	"Sacatepéquez",
+  "4" =	"Chimaltenango",
+  "5" =	"Escuintla",
+  "6" =	"Santa Rosa",
+  "7" =	"Sololá",
+  "8" =	"Totonicapán",
+  "9"	= "Quetzaltenango",
+  "10" = "Suchitepéquez",
+  "11" = "Retalhuleu",
+  "12" = "San Marcos",
+  "13" = "Huehuetenango",
+  "14" = "Quiché",
+  "15" = "Baja Verapaz",
+  "16" = "Alta Verapaz",
+  "17" = "Petén",
+  "18" = "Izabal",
+  "19" = "Zacapa",
+  "20" = "Chiquimula",
+  "21" = "Jalapa",
+  "22" = "Jutiapa"
+)
+
+pue_decod <- c(
+"1" = "Maya",
+"2" = "Garífuna",
+"3" = "Xinka",
+"4" = "Mestizo / Ladino",
+"5" = "Otro",
+"9" = "Ignorado"
+)
+
+esc_decod <- c(
+"1" = "Ninguno",
+"2" = "Primaria",
+"3" = "Básica",
+"4" = "Diversificado",
+"5" = "Universitario",
+"6" = "Postgrado",
+"9" = "Ingorado"
+)
+
+ciuo_decod <- c(
+"01" = "Oficiales de las fuerzas armadas",
+"03" = "Otros miembros de las fuerzas armadas",
+"11" = "Directores ejecutivos, personal directivo de la administración pública y miembros del poder ejecutivo y de los cuerpos l",
+"12" = "Directores administradores y comerciales",
+"14" = "Gerentes de hoteles, restaurantes, comercios y otros servicios",
+"21" = "Profesionales de las ciencias y de la ingeniería",
+"22" = "Profesionales de la salud",
+"23" = "Profesionales de la enseñanza",
+"24" = "Especialistas en organización de la administración publica y de empresas",
+"25" = "Profesionales de tecnología de la información y las comunicaciones",
+"26" = "Profesionales en derecho, en ciencias sociales y culturales",
+"31" = "Profesionales de las ciencias y la ingeniería de nivel medio",
+"32" = "Profesionales de nivel medio de la salud",
+"33" = "Profesionales de nivel medio en operaciones financieras y administrativas",
+"34" = "Profesionales de nivel medio de servicios jurídicos, sociales, culturales y afines",
+"35" = "Técnicos de la tecnología de la información y las comunicaciones",
+"41" = "Oficinistas",
+"42" = "Empleados en trato directo con el público",
+"43" = "Empleados contables y encargados del registro de materiales",
+"44" = "Otro personal de apoyo administrativo",
+"51" = "Trabajadores de los servicios personales",
+"52" = "Vendedores",
+"54" = "Personal de los servicios de protección",
+"61" = "Agricultores y trabajadores calificados de explotaciones agropecuarias con destino al mercado",
+"62" = "Trabajadores forestales calificados, pescadores y cazadores",
+"71" = "Oficiales y operarios de la construcción excluyendo electricistas",
+"72" = "Oficiales y operarios de la metalurgia, la construcción mecánica y afines",
+"73" = "Artesanos y operarios de las artes gráficas",
+"74" = "Trabajadores especializados en electricidad y la elecrotecnología",
+"75" = "Operarios y oficiales de procesamiento de alimentos, de la confección, ebanistas, otros artesanos y afines",
+"81" = "Operadores de instalaciones fijas y máquinas",
+"82" = "Ensambladores",
+"83" = "Conductores de vehículos y operadores de equipos pesados móviles",
+"91" = "Limpiadores y asistentes",
+"92" = "Peones agropecuarios, pesqueros y forestales",
+"93" = "Peones de la minería, la construcción, la industria manufacturera y el transporte",
+"94" = "Ayudantes de preparación de alimentos",
+"95" = "Vendedores ambulantes de servicios y afines",
+"96" = "Recolectores de desechos y otras ocupaciones elementales",
+"97" = "No especificado en otro grupo",
+"99" = "Ignorado",
+)
+
+datos <- datos %>%
+  mutate(
+    DEPREG = dep_decod[as.character(DEPREG)],
+    DEPOCU = dep_decod[as.character(DEPOCU)],
+    PUEHOM = pue_decod[as.character(PUEHOM)],
+    PUEMUJ = pue_decod[as.character(PUEMUJ)],
+    ESCHOM = esc_decod[as.character(ESCHOM)],
+    ESCMUJ = esc_decod[as.character(ESCMUJ)],
+    CIUOHOM = ciuo_decod[as.character(CIUOHOM)],
+    CIUOMUJ = ciuo_decod[as.character(CIUOMUJ)]
+  )
 ```
 
 Se estaran utilizando las siguientes variables para realizar un analisis categorico: "DEPREG", "MUPREG", "DEPOCU", "MUPOCU","PUEHOM", "PUEMUJ", "NACHOM", "NACMUJ","ESCHOM", "ESCMUJ", "CIUOHOM", "CIUOMUJ"

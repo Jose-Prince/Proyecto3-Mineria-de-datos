@@ -1,0 +1,87 @@
+---
+title: "Exploración de variables"
+author: "José Prince"
+date: "2025-03-24"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+datos <- read.csv("merged_output.csv")
+
+media_EDADHOM <- mean(datos$EDADHOM[datos$EDADHOM != 999], na.rm = TRUE)
+media_EDADMUJ <- mean(datos$EDADMUJ[datos$EDADMUJ != 999], na.rm = TRUE)
+
+datos$EDADHOM[datos$EDADHOM == 999] <- media_EDADHOM
+datos$EDADMUJ[datos$EDADMUJ == 999] <- media_EDADMUJ
+
+```
+
+# Exploración variables númericas
+
+Se tienen las siguientes variables como númericas:
+
+- **AÑOREG** - Año de registro
+- **DIAOCU** - Día de ocurrencia
+- **MESOCU** - Mes de ocurrencia
+- **AÑOOCU** - Año de ocurrencia  
+- **EDADHOM** - Edad del hombre 
+- **EDADMUJ** - Edad de la mujer
+
+```{r num var exploration}
+datos_numericos <- datos[, c("AÑOREG", "DIAOCU", "MESOCU", "AÑOOCU", "EDADHOM", "EDADMUJ")]
+
+calcular_estadisticas <- function(columna) {
+  lista <- list(
+    Media = mean(columna, na.rm = TRUE),
+    Mediana = median(columna, na.rm = TRUE),
+    Moda = as.numeric(names(sort(table(columna), decreasing = TRUE)[1])),
+    Rango = range(columna, na.rm = TRUE),
+    Varianza = var(columna, na.rm = TRUE),
+    Desviacion_Estandar = sd(columna, na.rm = TRUE),
+    Minimo = min(columna, na.rm = TRUE),
+    Q1 = quantile(columna, 0.25, na.rm = TRUE),
+    Q2 = quantile(columna, 0.50, na.rm = TRUE),
+    Q3 = quantile(columna, 0.75, na.rm = TRUE),
+    Maximo = max(columna, na.rm = TRUE)
+  )
+  return(lista)
+}
+
+estadisticas <- lapply(datos_numericos, calcular_estadisticas)
+
+for (variable in names(estadisticas)) {
+  cat("\n", variable, "\n")
+  for (nombre_estadistica in names(estadisticas[[variable]])) {
+    cat(nombre_estadistica, ":", estadisticas[[variable]][[nombre_estadistica]], "\n")
+  }
+}
+
+
+```
+
+El análisis de las variables numéricas revela tendencias significativas en los datos. Para las fechas de registro y ocurrencia (AÑOREG y AÑOOCU), se observa que la media y la mediana están cerca de 2019, lo que indica que la mayoría de los eventos se registraron  en años recientes. La moda en ambos casos es 2023, lo que sugiere un aumento en los registros en ese año. La dispersión de los datos es baja, con desviaciones estándar de 3.52 y 2.61 respectivamente, lo que implica que la mayoría de los valores se concentran en torno a la media. EN cuanto a los días y meses de ocurrencia (DIAOCU y MESOCU), la distribución parece uniforme, con valores centrales en torno al día 16 y al mes 6. La desviación estándar en el día de ocurrencia es de 8.68, lo que indica mayor variabilidad en los días en comparación con los meses.
+
+Respecto a las edades (EDADHOM y EDADMUJ), las medias son de aproximadamente 36 y 33 años respectivamente, con una dispersión relativamente baja. Esto sugiere que la mayoría de los registros corresponden a adultos jóvenes (este dato debe ser corroborado debido a la omisión de muchas edades en el dataset). El rango de los hombres es mayor (15 - 98 años) en comparación con el de las mujeres (15 - 81 años), lo que podría reflejar una mayor presencia de hombres de mayor edad en los registros. En general, la distribución de las edades es relativamente homogénea.
+
+# Exploración variables categoricas
+
+Se tienen las siguientes variables como categóricas:
+
+- **DEPREG** - Departamento de registro  
+- **MUPREG** - Municipio de registro  
+- **MESREG** - Mes de registro  
+- **DEPOCU** - Departamento de ocurrencia  
+- **MUPOCU** - Municipio de ocurrencia  
+- **PUEHOM** - Pueblo de pertenencia del hombre  
+- **PUEMUJ** - Pueblo de pertenencia de la mujer  
+- **NACHOM** - Nacionalidad del hombre  
+- **NACMUJ** - Nacionalidad de la mujer  
+- **ESCHOM** - Escolaridad del hombre  
+- **ESCMUJ** - Escolaridad de la mujer  
+- **CIUOHOM** - Ocupación del hombre (según CIUO-08)
+- **CIUOMUJ** - Ocupación de la mujer (según CIUO-08)
+
+# Relaciones entre las variables
+

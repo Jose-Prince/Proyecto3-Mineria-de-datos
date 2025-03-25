@@ -83,5 +83,28 @@ Se tienen las siguientes variables como categóricas:
 - **CIUOHOM** - Ocupación del hombre (según CIUO-08)
 - **CIUOMUJ** - Ocupación de la mujer (según CIUO-08)
 
+```{r cat var exploration}
+
+datos_categoricos <- datos[, c("DEPREG", "MUPREG", "DEPOCU", "MUPOCU", "PUEHOM", "PUEMUJ", "NACHOM", "NACMUJ", "ESCHOM", "ESCMUJ", "CIUOHOM", "CIUOMUJ")]
+
+generar_tabla_frecuencia <- function(columna) {
+  tabla <- table(columna)
+  return(tabla)
+}
+
+tablas_frecuencia <- head(lapply(datos_categoricos, generar_tabla_frecuencia),10)
+
+for (variable in names(tablas_frecuencia)) {
+  cat("\n", variable, "\n")
+  print(tablas_frecuencia[[variable]])
+}
+```
+
+El análsis de las tablas de frecuencia de DEPREG y MUPREG revela una distribución desigual de los datos. En DEPREG, la categoría con mayor frecuencia es la primera, con 31,204 casos, lo que representa una concentración significativa en comparación con las demás. Otras categorías muestran una distribución más dispersa, con valores que oscilan entre 952 y 6,827, lo que sugiere una fuerte asimetría en los datos. Este patrón indica que la mayoría de los registros pertenecen a una sola categoría, mientras que las demás están distribuidas en menor medida.
+
+Por otro lado, MUPREG presenta una ayor dispersión con un número más elevado de categorías, algunas con muy pocos registros. La categoría más frecuente (101) tiene 23,848 casos, superando ampliamente a las demás, mientras que muchas otras tienen frecuencias menores a 1,000. Esto sugiere que ciertos valores dominan la distribución mientras que la mayoría son poco representativos. La alta variabilidad en la distribución de frecuencia indica la necesidad de un análisis más profundo para comprender la relevancia de cada categoría y su impacto en el conjunto de datos.
+
 # Relaciones entre las variables
+
+
 

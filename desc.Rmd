@@ -208,6 +208,19 @@ El análisis de las variables numéricas revela tendencias significativas en los
 
 Respecto a las edades (EDADHOM y EDADMUJ), las medias son de aproximadamente 36 y 33 años respectivamente, con una dispersión relativamente baja. Esto sugiere que la mayoría de los registros corresponden a adultos jóvenes (este dato debe ser corroborado debido a la omisión de muchas edades en el dataset). El rango de los hombres es mayor (15 - 98 años) en comparación con el de las mujeres (15 - 81 años), lo que podría reflejar una mayor presencia de hombres de mayor edad en los registros. En general, la distribución de las edades es relativamente homogénea.
 
+```{r}
+ggplot(datos_numericos, aes(x = EDADHOM, y = EDADMUJ)) +
+  geom_point(alpha = 0.4, color = "darkgreen") +
+  geom_abline(slope = 1, intercept = 0, color = "gray", linetype = "dashed") +
+  labs(
+    title = "Relación entre la edad del hombre y la mujer al divorciarse",
+    x = "Edad del hombre",
+    y = "Edad de la mujer"
+  ) +
+  theme_minimal()
+```
+A traves del grafico de dispersion se puede observar con mayor detalle la relacion entre las edades de los hombres y las mujeres divorciados en el conjunto de datos. La linea de identidad nos ayuda a identificar de manera mas visual que las edades de los hombres suelen ser mayores que las de las mujeres. Cabe notar que aproximadamente antes de los 35 años, las edades entre las personas son similares, y luego de este numero las edades de los hombres suele aumenta en relacion a las de las mujeres; esto se puede observar ya que la mayoria de los datos pasados los 35 años se encuentran debajo de la linea de identidad.
+
 # Exploración variables categoricas
 
 Se tienen las siguientes variables como categóricas:

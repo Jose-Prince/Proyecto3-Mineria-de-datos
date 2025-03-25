@@ -8,6 +8,9 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
+library(ggplot2)
+library(reshape2)
+
 datos <- read.csv("merged_output.csv")
 
 media_EDADHOM <- mean(datos$EDADHOM[datos$EDADHOM != 999], na.rm = TRUE)
@@ -106,5 +109,18 @@ Por otro lado, MUPREG presenta una ayor dispersión con un número más elevado 
 
 # Relaciones entre las variables
 
+```{r var relation}
+numerical_data <- datos[sapply(datos, is.numeric)]
 
+corr_matrix <- cor(numerical_data, use = "complete.obs")
+corr_melted <- melt(corr_matrix)
 
+ggplot(corr_melted, aes(Var1, Var2, fill = value)) + 
+  geom_tile() + 
+  scale_fill_gradient2(low = "blue", high = "red", mid = "white", midpoint = 0, limit = c(-1, 1)) + 
+  theme_minimal() + 
+  labs(title = "Matriz de Correlación", x = "", y = "") + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+La matriz de correlación muestra relaciones lineales entre las variables, se revelan fuertes correlaciones positivas entre fechas de registro y ocurrencia, así como entre las edades de hombres y mujeres. Sin embargo, las variables categóricas como pueblos, nacionalidades y escolaridad muestran correlaciones débiles o nulas entre sí y con las variables de fecha y edad, indicando que no hay una relación lineal fuerte.

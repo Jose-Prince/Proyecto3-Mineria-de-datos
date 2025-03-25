@@ -53,6 +53,16 @@ pue_decod <- c(
 "9" = "Ignorado"
 )
 
+esc_decod <- c(
+"1" = "Ninguno",
+"2" = "Primaria",
+"3" = "Básica",
+"4" = "Diversificado",
+"5" = "Universitario",
+"6" = "Postgrado",
+"9" = "Ingorado"
+)
+
 datos <- datos %>%
   mutate(
     DEPREG = dep_decod[as.character(DEPREG)],

@@ -1,6 +1,6 @@
 ---
 title: "Avances Proyecto 3: Descripcion Variables"
-author: "Andre Jo 22199 Jose Prince 22087"
+author: "Andre Jo 22199 Jose Prince 22087 Nelson Escalante 22046"
 date: "2025-03-24"
 output: html_document
 ---
@@ -186,6 +186,24 @@ for (variable in names(estadisticas)) {
 
 ```
 
+```{r}
+library(tidyr)
+
+datos_num_mod <- datos_numericos %>%
+  select(EDADHOM, EDADMUJ) %>%
+  pivot_longer(cols = everything(), names_to = "Genero", values_to = "Edad") %>%
+  mutate(Genero = recode(Genero, EDADHOM = "Hombre", EDADMUJ = "Mujer"))
+
+ggplot(datos_num_mod, aes(x = Genero, y = Edad, fill = Genero)) +
+  geom_boxplot() +
+  labs(
+    title = "Distribución de edades al momento del divorcio",
+    x = "Género",
+    y = "Edad"
+  ) +
+  theme_minimal()
+```
+
 El análisis de las variables numéricas revela tendencias significativas en los datos. Para las fechas de registro y ocurrencia (AÑOREG y AÑOOCU), se observa que la media y la mediana están cerca de 2019, lo que indica que la mayoría de los eventos se registraron  en años recientes. La moda en ambos casos es 2023, lo que sugiere un aumento en los registros en ese año. La dispersión de los datos es baja, con desviaciones estándar de 3.52 y 2.61 respectivamente, lo que implica que la mayoría de los valores se concentran en torno a la media. EN cuanto a los días y meses de ocurrencia (DIAOCU y MESOCU), la distribución parece uniforme, con valores centrales en torno al día 16 y al mes 6. La desviación estándar en el día de ocurrencia es de 8.68, lo que indica mayor variabilidad en los días en comparación con los meses.
 
 Respecto a las edades (EDADHOM y EDADMUJ), las medias son de aproximadamente 36 y 33 años respectivamente, con una dispersión relativamente baja. Esto sugiere que la mayoría de los registros corresponden a adultos jóvenes (este dato debe ser corroborado debido a la omisión de muchas edades en el dataset). El rango de los hombres es mayor (15 - 98 años) en comparación con el de las mujeres (15 - 81 años), lo que podría reflejar una mayor presencia de hombres de mayor edad en los registros. En general, la distribución de las edades es relativamente homogénea.
@@ -211,7 +229,67 @@ Se tienen las siguientes variables como categóricas:
 ```{r cat var exploration}
 
 datos_categoricos <- datos[, c("DEPREG", "MUPREG", "DEPOCU", "MUPOCU", "PUEHOM", "PUEMUJ", "NACHOM", "NACMUJ", "ESCHOM", "ESCMUJ", "CIUOHOM", "CIUOMUJ")]
+```
 
+Para entender mejor los datos, se decodificaran algunas de las variables categoricas para mejorar la legibilidad.
+```{r}
+dep_decod <- c(
+  "1" =	"Guatemala",
+  "2"	= "El Progreso",
+  "3" =	"Sacatepéquez",
+  "4" =	"Chimaltenango",
+  "5" =	"Escuintla",
+  "6" =	"Santa Rosa",
+  "7" =	"Sololá",
+  "8" =	"Totonicapán",
+  "9"	= "Quetzaltenango",
+  "10" = "Suchitepéquez",
+  "11" = "Retalhuleu",
+  "12" = "San Marcos",
+  "13" = "Huehuetenango",
+  "14" = "Quiché",
+  "15" = "Baja Verapaz",
+  "16" = "Alta Verapaz",
+  "17" = "Petén",
+  "18" = "Izabal",
+  "19" = "Zacapa",
+  "20" = "Chiquimula",
+  "21" = "Jalapa",
+  "22" = "Jutiapa"
+)
+
+pue_decod <- c(
+"1" = "Maya",
+"2" = "Garífuna",
+"3" = "Xinka",
+"4" = "Mestizo / Ladino",
+"5" = "Otro",
+"9" = "Ignorado"
+)
+
+esc_decod <- c(
+"1" = "Ninguno",
+"2" = "Primaria",
+"3" = "Básica",
+"4" = "Diversificado",
+"5" = "Universitario",
+"6" = "Postgrado",
+"9" = "Ingorado"
+)
+
+datos_categoricos <- datos_categoricos %>%
+  mutate(
+    DEPREG = dep_decod[as.character(DEPREG)],
+    DEPOCU = dep_decod[as.character(DEPOCU)],
+    PUEHOM = pue_decod[as.character(PUEHOM)],
+    PUEMUJ = pue_decod[as.character(PUEMUJ)],
+    ESCHOM = esc_decod[as.character(ESCHOM)],
+    ESCMUJ = esc_decod[as.character(ESCMUJ)],
+  )
+```
+
+Las variables que se decodificaron fueron seleccionadas debido a que estas son relevantes para enteder los datos a simple vista. Las variables de nacionalidad, municipio y ocupacion no fueron decodificadas debido a la cantidad de datos en estas, los cuales, al decodificar, podrian causar complicaciones en la legibilidad y comprension de los datos.
+```{r}
 generar_tabla_frecuencia <- function(columna) {
   tabla <- table(columna)
   return(tabla)

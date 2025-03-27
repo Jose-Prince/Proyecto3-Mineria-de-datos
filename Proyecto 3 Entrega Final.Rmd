@@ -1,0 +1,30 @@
+---
+title: "Proyecto3"
+author: "José Prince, Andre Jo y Nelson Escalante"
+date: "2025-03-26"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+# Proyecto 3 Análisis Exploratorio
+
+```{r data loading}
+summary(cars)
+```
+
+## Situación Problemática
+
+## Problema Científico
+
+## Objetivos
+
+## Descripción de los datos
+
+## Análisis Exploratorio
+
+## Hallazgos y conclusiones
+
+

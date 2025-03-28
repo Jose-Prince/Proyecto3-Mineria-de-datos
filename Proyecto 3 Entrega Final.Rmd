@@ -12,7 +12,10 @@ knitr::opts_chunk$set(echo = FALSE)
 # Proyecto 3 Análisis Exploratorio
 
 ```{r data loading}
-summary(cars)
+library(dplyr)
+library(ggplot2)
+library(reshape2)
+
 ```
 
 ## Situación Problemática
@@ -23,7 +26,670 @@ summary(cars)
 
 ## Descripción de los datos
 
+Variable Categórica
+DEPREG  - Departamento de registro     
+Representa el departamento en el cual se registró el evento (1-22)
+
+Variable Categórica
+MUPREG  - Municipio de registro
+Representa el municipio en el cual se registró el evento ( 0101-2217 )
+
+Variable Númerica
+MESREG  - Mes de registro
+Representa el mes en el cual se registró el evento
+(1-12)
+
+Variable Númerica
+AÑOREG  - Año de registro es representado desde (2012-2024)
+
+Variable Númerica
+DIAOCU  - Dia de ocurrencia (1-30)
+
+Variable Númerica
+MESOCU  - Mes de ocurrencia (1-12)
+
+Variable Númerica
+AÑOOCU  - Año ocurrencia (2012-2024)
+
+Variable Categórica
+DEPOCU  - Departamento de Ocurrencia (1-22)
+
+Variable Categórica
+MUPOCU  - Municipio de ocurrencia ( 0101-2217 )
+Lugar que ocurrio el divorcio
+
+Variable Númerica
+EDADHOM - Edad del hombre rango de 1-100 año y 999 como ignorado
+
+Variable Númerica
+EDADMUJ - Edad de la Mujer  rango de 1-100 año 999 como ignorado 
+
+Variable Categórica
+PUEHOM  - Pueblo de pertenencia del hombre  (1-5), 9 is ignorado
+Es la etnia que pertenece si es Maya, Garifuna o Xinca entre otros. 
+
+Variable Categórica
+PUEMUJ  - Pueblo de pertenencia de la mujer  (1-5), 9 is ignorado
+Es la etnia que pertenece si es Maya, Garifuna o Xinca entre otros. 
+
+Variable Categórica
+NACHOM  - Nacionalidad del hombre
+(argentina, peru, Guatemala, Venezuela etc..)
+Denotados por números aunque se observa que 9999 representa valor ignorado
+
+Variable Categórica
+NACMUJ  - Nacionalidad de la mujer
+(argentina, peru, Guatemala, Venezuela etc..)
+Denotados por números aunque se observa que 9999 representa valor ignorado
+
+Variable Categórica
+ESCHOM  - Escolaridad del hombre 
+rango de 1 a 6 siendo 1 ninguno y 6 postgrado
+9 es ignorado
+
+Variable Categórica
+ESCMUJ  - Escolaridad de la mujer
+rango de 1 a 6 siendo 1 ninguno y 6 postgrado
+9 es ignorado
+
+Variable Categórica
+CIUOHOM - Ocupación (Subgrupos, CIUO-08) del hombre
+Ocupación (trabajo) denotado por 01-96 del otro lado se pone IGNORADO y en caso no estar especificado se pone NEOG
+
+Variable Categórica
+CIUOMUJ - Ocupación (Subgrupos, CIUO-08) de la mujer 
+Ocupación (trabajo) denotado por 01-96 del otro lado se pone IGNORADO y en caso no estar especificado se pone NEOG
+
+
+
+Tomar nota que hay unas discrepancias con las ocupaciones en la lista de variables ya que hay algunos archivos en EXCEL que utilizaron codigo de 4 digitos y otros de 2 digitos. Por otro lado si no se encuentra de la lista se tomara en cuenta como otro etiqueta 
+97 No especificado en otro grupo Por otro lado si hay 9999 se tomara como IGNORADO
+
+
+
+Se observa tambien que las variables estan denotadas por codigo lo cual se tiene que utilizar excel de definicion de variables para saber la etiqueta. 
+
+```{r }
+length(colnames(datos))
+
+nrow(datos)
+```
+Se observa que hay un total de 19 variables a medir. De estas existen 7 variables que son númericas y 12 variables que son categoricas. Ademas de eso contamos con más de 81826 filas de registros dentro del rango de años 2012 a 2024. 
+```{r }
+summary(datos)
+```
+Se observa que hay un total de 19 variables a medir. De estas existen 7 variables que son númericas y 12 variables que son categoricas. 
+
 ## Análisis Exploratorio
+
+### Exploración variables númericas
+
+Se tienen las siguientes variables como númericas:
+
+- **AÑOREG** - Año de registro
+- **DIAOCU** - Día de ocurrencia
+- **MESOCU** - Mes de ocurrencia
+- **AÑOOCU** - Año de ocurrencia  
+- **EDADHOM** - Edad del hombre 
+- **EDADMUJ** - Edad de la mujer
+
+```{r num var exploration}
+
+datos <- read.csv("merged_output.csv")
+
+media_EDADHOM <- mean(datos$EDADHOM[datos$EDADHOM != 999], na.rm = TRUE)
+media_EDADMUJ <- mean(datos$EDADMUJ[datos$EDADMUJ != 999], na.rm = TRUE)
+
+datos$EDADHOM[datos$EDADHOM == 999] <- media_EDADHOM
+datos$EDADMUJ[datos$EDADMUJ == 999] <- media_EDADMUJ
+
+
+datos_numericos <- datos[, c("AÑOREG", "DIAOCU", "MESOCU", "AÑOOCU", "EDADHOM", "EDADMUJ")]
+
+calcular_estadisticas <- function(columna) {
+  lista <- list(
+    Media = mean(columna, na.rm = TRUE),
+    Mediana = median(columna, na.rm = TRUE),
+    Moda = as.numeric(names(sort(table(columna), decreasing = TRUE)[1])),
+    Rango = range(columna, na.rm = TRUE),
+    Varianza = var(columna, na.rm = TRUE),
+    Desviacion_Estandar = sd(columna, na.rm = TRUE),
+    Minimo = min(columna, na.rm = TRUE),
+    Q1 = quantile(columna, 0.25, na.rm = TRUE),
+    Q2 = quantile(columna, 0.50, na.rm = TRUE),
+    Q3 = quantile(columna, 0.75, na.rm = TRUE),
+    Maximo = max(columna, na.rm = TRUE)
+  )
+  return(lista)
+}
+
+estadisticas <- lapply(datos_numericos, calcular_estadisticas)
+
+for (variable in names(estadisticas)) {
+  cat("\n", variable, "\n")
+  for (nombre_estadistica in names(estadisticas[[variable]])) {
+    cat(nombre_estadistica, ":", estadisticas[[variable]][[nombre_estadistica]], "\n")
+  }
+}
+
+
+```
+
+```{r}
+library(tidyr)
+
+datos_num_mod <- datos_numericos %>%
+  select(EDADHOM, EDADMUJ) %>%
+  pivot_longer(cols = everything(), names_to = "Genero", values_to = "Edad") %>%
+  mutate(Genero = recode(Genero, EDADHOM = "Hombre", EDADMUJ = "Mujer"))
+
+ggplot(datos_num_mod, aes(x = Genero, y = Edad, fill = Genero)) +
+  geom_boxplot() +
+  labs(
+    title = "Distribución de edades al momento del divorcio",
+    x = "Género",
+    y = "Edad"
+  ) +
+  theme_minimal()
+```
+
+El análisis de las variables numéricas revela tendencias significativas en los datos. Para las fechas de registro y ocurrencia (AÑOREG y AÑOOCU), se observa que la media y la mediana están cerca de 2019, lo que indica que la mayoría de los eventos se registraron  en años recientes. La moda en ambos casos es 2023, lo que sugiere un aumento en los registros en ese año. La dispersión de los datos es baja, con desviaciones estándar de 3.52 y 2.61 respectivamente, lo que implica que la mayoría de los valores se concentran en torno a la media. EN cuanto a los días y meses de ocurrencia (DIAOCU y MESOCU), la distribución parece uniforme, con valores centrales en torno al día 16 y al mes 6. La desviación estándar en el día de ocurrencia es de 8.68, lo que indica mayor variabilidad en los días en comparación con los meses.
+
+Respecto a las edades (EDADHOM y EDADMUJ), las medias son de aproximadamente 36 y 33 años respectivamente, con una dispersión relativamente baja. Esto sugiere que la mayoría de los registros corresponden a adultos jóvenes (este dato debe ser corroborado debido a la omisión de muchas edades en el dataset). El rango de los hombres es mayor (15 - 98 años) en comparación con el de las mujeres (15 - 81 años), lo que podría reflejar una mayor presencia de hombres de mayor edad en los registros. En general, la distribución de las edades es relativamente homogénea.
+
+```{r}
+ggplot(datos_numericos, aes(x = EDADHOM, y = EDADMUJ)) +
+  geom_point(alpha = 0.4, color = "darkgreen") +
+  geom_abline(slope = 1, intercept = 0, color = "gray", linetype = "dashed") +
+  labs(
+    title = "Relación entre la edad del hombre y la mujer al divorciarse",
+    x = "Edad del hombre",
+    y = "Edad de la mujer"
+  ) +
+  theme_minimal()
+```
+A traves del grafico de dispersion se puede observar con mayor detalle la relacion entre las edades de los hombres y las mujeres divorciados en el conjunto de datos. La linea de identidad nos ayuda a identificar de manera mas visual que las edades de los hombres suelen ser mayores que las de las mujeres. Cabe notar que aproximadamente antes de los 35 años, las edades entre las personas son similares, y luego de este numero las edades de los hombres suele aumenta en relacion a las de las mujeres; esto se puede observar ya que la mayoria de los datos pasados los 35 años se encuentran debajo de la linea de identidad.
+
+### Exploración variables categoricas
+
+Se tienen las siguientes variables como categóricas:
+
+- **DEPREG** - Departamento de registro  
+- **MUPREG** - Municipio de registro  
+- **MESREG** - Mes de registro  
+- **DEPOCU** - Departamento de ocurrencia  
+- **MUPOCU** - Municipio de ocurrencia  
+- **PUEHOM** - Pueblo de pertenencia del hombre  
+- **PUEMUJ** - Pueblo de pertenencia de la mujer  
+- **NACHOM** - Nacionalidad del hombre  
+- **NACMUJ** - Nacionalidad de la mujer  
+- **ESCHOM** - Escolaridad del hombre  
+- **ESCMUJ** - Escolaridad de la mujer  
+- **CIUOHOM** - Ocupación del hombre (según CIUO-08)
+- **CIUOMUJ** - Ocupación de la mujer (según CIUO-08)
+
+```{r cat var exploration}
+
+datos_categoricos <- datos[, c("DEPREG", "MUPREG", "DEPOCU", "MUPOCU", "PUEHOM", "PUEMUJ", "NACHOM", "NACMUJ", "ESCHOM", "ESCMUJ", "CIUOHOM", "CIUOMUJ")]
+```
+
+Para entender mejor los datos, se decodificaran algunas de las variables categoricas para mejorar la legibilidad.
+```{r}
+dep_decod <- c(
+  "1" =	"Guatemala",
+  "2"	= "El Progreso",
+  "3" =	"Sacatepéquez",
+  "4" =	"Chimaltenango",
+  "5" =	"Escuintla",
+  "6" =	"Santa Rosa",
+  "7" =	"Sololá",
+  "8" =	"Totonicapán",
+  "9"	= "Quetzaltenango",
+  "10" = "Suchitepéquez",
+  "11" = "Retalhuleu",
+  "12" = "San Marcos",
+  "13" = "Huehuetenango",
+  "14" = "Quiché",
+  "15" = "Baja Verapaz",
+  "16" = "Alta Verapaz",
+  "17" = "Petén",
+  "18" = "Izabal",
+  "19" = "Zacapa",
+  "20" = "Chiquimula",
+  "21" = "Jalapa",
+  "22" = "Jutiapa"
+)
+
+pue_decod <- c(
+"1" = "Maya",
+"2" = "Garífuna",
+"3" = "Xinka",
+"4" = "Mestizo / Ladino",
+"5" = "Otro",
+"9" = "Ignorado"
+)
+
+esc_decod <- c(
+"1" = "Ninguno",
+"2" = "Primaria",
+"3" = "Básica",
+"4" = "Diversificado",
+"5" = "Universitario",
+"6" = "Postgrado",
+"9" = "Ingorado"
+)
+
+datos_categoricos <- datos_categoricos %>%
+  mutate(
+    DEPREG = dep_decod[as.character(DEPREG)],
+    DEPOCU = dep_decod[as.character(DEPOCU)],
+    PUEHOM = pue_decod[as.character(PUEHOM)],
+    PUEMUJ = pue_decod[as.character(PUEMUJ)],
+    ESCHOM = esc_decod[as.character(ESCHOM)],
+    ESCMUJ = esc_decod[as.character(ESCMUJ)],
+  )
+```
+
+Las variables que se decodificaron fueron seleccionadas debido a que estas son relevantes para enteder los datos a simple vista. Las variables de nacionalidad, municipio y ocupacion no fueron decodificadas debido a la cantidad de datos en estas, los cuales, al decodificar, podrian causar complicaciones en la legibilidad y comprension de los datos.
+```{r}
+generar_tabla_frecuencia <- function(columna) {
+  tabla <- table(columna)
+  return(tabla)
+}
+
+tablas_frecuencia <- head(lapply(datos_categoricos, generar_tabla_frecuencia),10)
+
+for (variable in names(tablas_frecuencia)) {
+  cat("\n", variable, "\n")
+  print(tablas_frecuencia[[variable]])
+}
+```
+
+El análsis de las tablas de frecuencia de DEPREG y MUPREG revela una distribución desigual de los datos. En DEPREG, la categoría con mayor frecuencia es la primera, con 31,204 casos, lo que representa una concentración significativa en comparación con las demás. Otras categorías muestran una distribución más dispersa, con valores que oscilan entre 952 y 6,827, lo que sugiere una fuerte asimetría en los datos. Este patrón indica que la mayoría de los registros pertenecen a una sola categoría, mientras que las demás están distribuidas en menor medida.
+
+Por otro lado, MUPREG presenta una ayor dispersión con un número más elevado de categorías, algunas con muy pocos registros. La categoría más frecuente (101) tiene 23,848 casos, superando ampliamente a las demás, mientras que muchas otras tienen frecuencias menores a 1,000. Esto sugiere que ciertos valores dominan la distribución mientras que la mayoría son poco representativos. La alta variabilidad en la distribución de frecuencia indica la necesidad de un análisis más profundo para comprender la relevancia de cada categoría y su impacto en el conjunto de datos.
+
+```{r }
+datos <- read.csv("merged_output.csv")
+
+```
+
+Se estaran utilizando las siguientes variables para realizar un analisis categorico: "DEPREG", "MUPREG", "DEPOCU", "MUPOCU","PUEHOM", "PUEMUJ", "NACHOM", "NACMUJ","ESCHOM", "ESCMUJ", "CIUOHOM", "CIUOMUJ"
+```{r }
+datos_categoricos <- datos[, c("DEPREG", "MUPREG", "DEPOCU", "MUPOCU", 
+                               "PUEHOM", "PUEMUJ", "NACHOM", "NACMUJ", 
+                               "ESCHOM", "ESCMUJ", "CIUOHOM", "CIUOMUJ")]
+
+head(datos_categoricos)
+
+```
+
+## Cuantos registros de divorcios hay en cada departamento?
+```{r }
+freq_table <- as.data.frame(table(datos$DEPREG))
+colnames(freq_table) <- c("DEPREG", "Frecuencia")
+print(head(freq_table))
+
+# Plot with different colors for each category
+ggplot(freq_table, aes(x = reorder(DEPREG, -Frecuencia), y = Frecuencia, fill = DEPREG)) +
+  geom_bar(stat = "identity") +
+  theme_minimal() +
+  labs(title = "Frecuencia de Registros por Departamento",
+       x = "Departamento",
+       y = "Frecuencia") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +  # Rotate labels
+  scale_fill_manual(values = rainbow(nrow(freq_table)))  # Different colors
+
+
+```
+
+1	Guatemala
+2	El Progreso
+3	Sacatepéquez
+4	Chimaltenango
+5	Escuintla
+6	Santa Rosa
+7	Sololá
+8	Totonicapán
+9	Quetzaltenango
+10	Suchitepéquez
+11	Retalhuleu
+12	San Marcos
+13	Huehuetenango
+14	Quiché
+15	Baja Verapaz
+16	Alta Verapaz
+17	Petén
+18	Izabal
+19	Zacapa
+20	Chiquimula
+21	Jalapa
+22	Jutiapa
+
+
+En base a la gráfica mostrada observamos que el mayor registros de divorcios es en el departamento de Guatemala, En el segundo puesto tenemos a Quetzaltenango con 1485 registros de divorcio, Por último se debe de tomar en cuenta que el departamento de Solola ha marcado el menor registro de divorcios.
+
+Con estos datos posiblemente podemos realizar un analisis ante la relación entre el pueblo o etnia de las personas divorciadas y el departamento donde se registró el divorcio.
+
+```{r }
+freq_table <- as.data.frame(table(datos$MUPREG))
+colnames(freq_table) <- c("MUPREG", "Frecuencia")
+print(head(freq_table))
+
+freq_table <- freq_table %>%
+  arrange(desc(Frecuencia)) %>%
+  head(10)
+
+# Plot with different colors for each category
+ggplot(freq_table, aes(x = reorder(MUPREG, -Frecuencia), y = Frecuencia, fill = MUPREG)) +
+  geom_bar(stat = "identity") +
+  theme_minimal() +
+  labs(title = "Los Municipios con el mayor Registro ",
+       x = "Municipio",
+       y = "Frecuencia") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "none") +  # Rotate labels
+  scale_fill_manual(values = rainbow(nrow(freq_table)))  # Different colors
+
+
+```
+Aunque existan una mayor cantidad de municipios se eligieron los 10 municipios con mayor registros. En primer lugar se obtiene el municipio de Guatemala con un monto total de 23848 registros. En segundo lugar tenemos a Santa Catarina Pinula con un total de 354 registros. Se observa que el rango de numero es de 101 a 110 lo cual tiene sentido debido a que todos los municipios nombreados forman parte de la capital de Guatemala donde es el departamento con mayor registros según la gráfica anterior.
+
+
+## Que departamento es más frecuente en registrar la ocurrencia del divorcio.
+```{r }
+freq_table <- as.data.frame(table(datos$DEPOCU))
+colnames(freq_table) <- c("DEPOCU", "Frecuencia")
+print(head(freq_table))
+
+# Plot with different colors for each category
+ggplot(freq_table, aes(x = reorder(DEPOCU, -Frecuencia), y = Frecuencia, fill = DEPOCU)) +
+  geom_bar(stat = "identity") +
+  theme_minimal() +
+  labs(title = "Frecuencia de ocurrencias por Departamento",
+       x = "Departamento",
+       y = "Frecuencia") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +  # Rotate labels
+  scale_fill_manual(values = rainbow(nrow(freq_table)))  # Different colors
+
+
+```
+El análisis muestra que el departamento de Guatemala tiene la mayor cantidad de registros de divorcios, lo cual es consistente con su alta población y una mayor cantidad de procesos legales en comparación con otros departamentos. Sin embargo, lo interesante es que la diferencia entre el registro y la ocurrencia de los divorcios sugiere que muchas personas pueden haber pensado en divorciarse en el departamento de Guatemala, pero finalmente formalizaron el proceso en otro departamento.
+
+
+Frecuencia de los municipios con mayor ocurrencia
+```{r }
+freq_table <- as.data.frame(table(datos$MUPOCU))
+colnames(freq_table) <- c("MUPOCU", "Frecuencia")
+print(head(freq_table))
+
+freq_table <- freq_table %>%
+  arrange(desc(Frecuencia)) %>%
+  head(10)
+
+# Plot with different colors for each category
+ggplot(freq_table, aes(x = reorder(MUPOCU, -Frecuencia), y = Frecuencia, fill = MUPOCU)) +
+  geom_bar(stat = "identity") +
+  theme_minimal() +
+  labs(title = "Los Municipios con el la mayor ocurrencia de divorcio ",
+       x = "Municipio",
+       y = "Frecuencia") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "none") +  # Rotate labels
+  scale_fill_manual(values = rainbow(nrow(freq_table)))  # Different colors
+
+
+```
+
+Se confirma también cómo, en el departamento, tienen diferentes datos los registros y las ocurrencias, lo cual indica que son variables diferentes. Sin embargo, lo que más se observa es que el municipio de Guatemala tiene la mayor frecuencia en la ocurrencia de divorcio.
+
+
+
+## Frecuencia de etnias registrados por Hombre
+```{r }
+freq_table <- as.data.frame(table(datos$PUEHOM))
+colnames(freq_table) <- c("PUEHOM", "Frecuencia")
+print(freq_table)
+
+# Plot with different colors for each category
+ggplot(freq_table, aes(x = reorder(PUEHOM, -Frecuencia), y = Frecuencia, fill = PUEHOM)) +
+  geom_bar(stat = "identity") +
+  theme_minimal() +
+  labs(title = "Frecuencia de Etnias registrados en el divocrio por Hombre",
+       x = "Etnias (Pueblo) Hombre",
+       y = "Frecuencia") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +  # Rotate labels
+  scale_fill_manual(values = rainbow(nrow(freq_table)))  # Different colors
+
+
+```
+1	Maya
+2	Garífuna
+3	Xinka
+4	Mestizo / Ladino
+5	Otro
+9	Ignorado
+
+Se observa que la mayor frecuencia es IGNORADO aunque observamos en el segundo puesto que los Mestizos/Ladinos con un total de 41402 registros, luego estan Maya y la menor frecuencia, se encuentra el pueblo Xinka con un total de 12 registros.
+
+
+## Mujer
+```{r }
+freq_table <- as.data.frame(table(datos$PUEMUJ))
+colnames(freq_table) <- c("PUEMUJ", "Frecuencia")
+print(freq_table)
+
+# Plot with different colors for each category
+ggplot(freq_table, aes(x = reorder(PUEMUJ, -Frecuencia), y = Frecuencia, fill = PUEMUJ)) +
+  geom_bar(stat = "identity") +
+  theme_minimal() +
+  labs(title = "Frecuencia de Etnias registrados en el divocrio por Mujer",
+       x = "Etnias (Pueblo) Mujer",
+       y = "Frecuencia") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +  # Rotate labels
+  scale_fill_manual(values = rainbow(nrow(freq_table)))  # Different colors
+
+
+```
+1	Maya
+2	Garífuna
+3	Xinka
+4	Mestizo / Ladino
+5	Otro
+9	Ignorado
+
+Se observa que la mayor frecuencia es IGNORADO aunque observamos en el segundo puesto que los Mestizos/Ladinos con un total de 32621 registros, luego estan Maya y la menor frecuencia, se encuentra el pueblo Xinka con un total de 16 registros.
+
+
+## Nacionalidad de la Hombre
+```{r }
+freq_table <- as.data.frame(table(datos$NACHOM))
+colnames(freq_table) <- c("NACHOM", "Frecuencia")
+print(freq_table)
+
+freq_table <- freq_table %>%
+  arrange(desc(Frecuencia)) %>%
+  head(15)
+freq_table <- freq_table %>%
+  filter(NACHOM != "320")  # Removes the row with NACHOM equal to "320"
+
+
+# Plot with different colors for each category
+ggplot(freq_table, aes(x = reorder(NACHOM, -Frecuencia), y = Frecuencia, fill = NACHOM)) +
+  geom_bar(stat = "identity") +
+  theme_minimal() +
+  labs(title = "Frecuencia de nacionalidades por hombre",
+       x = "Nacionalidad",
+       y = "Frecuencia") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "none") +  # Rotate labels
+  scale_fill_manual(values = rainbow(nrow(freq_table)))  # Different colors
+
+
+```
+
+Tomar nota de que no se agregó la nacionalidad Guatemala debido a que sabemos que tiene un mayor porcentaje. Solo observaremos las de otras nacionalidades para ver cuál es la más frecuente. Se observa que Estados Unidos y la variable IGNORADO son las más frecuentes, ya que tienen 327 datos.
+
+
+```{r }
+freq_table <- as.data.frame(table(datos$NACMUJ))
+colnames(freq_table) <- c("NACMUJ", "Frecuencia")
+print(head(freq_table))
+
+freq_table <- freq_table %>%
+  arrange(desc(Frecuencia)) %>%
+  head(15)
+freq_table <- freq_table %>%
+  filter(NACMUJ != "320")  # Removes the row with NACHOM equal to "320"
+
+
+# Plot with different colors for each category
+ggplot(freq_table, aes(x = reorder(NACMUJ, -Frecuencia), y = Frecuencia, fill = NACMUJ)) +
+  geom_bar(stat = "identity") +
+  theme_minimal() +
+  labs(title = "Frecuencia de nacionalidades por mujer",
+       x = "Nacionalidad",
+       y = "Frecuencia") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "none") +  # Rotate labels
+  scale_fill_manual(values = rainbow(nrow(freq_table)))  # Different colors
+
+
+```
+Tomar nota de que no se agregó la nacionalidad Guatemala debido a que sabemos que tiene un mayor porcentaje. Solo observaremos las de otras nacionalidades para ver cuál es la más frecuente. Se observa que Estados Unidos es más frecuente que la variable IGNORADO lo cual hace la mayor frecuente nacionalidad.
+
+
+## Exploración de la variable Escolaridad Hombre
+```{r }
+freq_table <- as.data.frame(table(datos$ESCHOM))
+colnames(freq_table) <- c("ESCHOM", "Frecuencia")
+print(freq_table)
+
+# Plot with different colors for each category
+ggplot(freq_table, aes(x = reorder(ESCHOM, -Frecuencia), y = Frecuencia, fill = ESCHOM)) +
+  geom_bar(stat = "identity") +
+  theme_minimal() +
+  labs(title = "Frecuencia de Escolaridad del Hombre",
+       x = "Departamento",
+       y = "Frecuencia") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +  # Rotate labels
+  scale_fill_manual(values = rainbow(nrow(freq_table)))  # Different colors
+
+
+```
+1	Ninguno
+2	Primaria
+3	Básica
+4	Diversificado
+5	Universitario
+6	Postgrado
+9	Ignorado
+
+Se observa que la mayor frecuencia corresponde a la variable IGNORADO, lo cual no nos indica si la población está educada o no. Por otro lado, observamos que la variable 'diversificado' (15,951) es la más frecuente y tiene cierta significancia. Otro dato importante a resaltar es que la variable 'ninguno' es la tercera más frecuente, lo cual podríamos relacionar con la causa del divorcio, si esta está vinculada con la educación.
+
+
+```{r }
+freq_table <- as.data.frame(table(datos$ESCMUJ))
+colnames(freq_table) <- c("ESCMUJ", "Frecuencia")
+print(freq_table)
+
+# Plot with different colors for each category
+ggplot(freq_table, aes(x = reorder(ESCMUJ, -Frecuencia), y = Frecuencia, fill = ESCMUJ)) +
+  geom_bar(stat = "identity") +
+  theme_minimal() +
+  labs(title = "Frecuencia de Escolaridad del Hombre",
+       x = "Departamento",
+       y = "Frecuencia") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +  # Rotate labels
+  scale_fill_manual(values = rainbow(nrow(freq_table)))  # Different colors
+
+
+```
+
+Se observa nuevamente que la mayor frecuencia corresponde a la variable IGNORADO, lo cual no nos indica si la población está educada o no. Por otro lado, observamos que la variable 'diversificado' (15,951) es la más frecuente y tiene cierta significancia. Otro dato importante a resaltar es que la variable 'ninguno' es la tercera más frecuente, lo cual podríamos relacionar con la causa del divorcio, si esta está vinculada con la educación.
+
+## Ocupacion Hombres
+
+
+```{r  warning=FALSE }
+replace_with_median <- function(df, column_name) {
+  # Extract the first two digits from the specified column
+  df <- df %>%
+    mutate(!!column_name := as.integer(substr(as.character(!!sym(column_name)), 1, 2))) 
+  
+  # Calculate the median of the transformed column
+  median_value <- median(df[[column_name]], na.rm = TRUE)
+  
+  # Replace NA values with the median
+  df[[column_name]][is.na(df[[column_name]])] <- median_value
+  
+  return(df)
+}
+
+
+datos <- replace_with_median(datos, "CIUOHOM")
+datos <- replace_with_median(datos, "CIUOMUJ")
+
+```
+
+```{r }
+freq_table <- as.data.frame(table(datos$CIUOHOM))
+colnames(freq_table) <- c("CIUOHOM", "Frecuencia")
+print(freq_table)
+
+freq_table <- freq_table %>%
+  arrange(desc(Frecuencia)) %>%
+  head(10)
+
+# Plot with different colors for each category
+ggplot(freq_table, aes(x = reorder(CIUOHOM, -Frecuencia), y = Frecuencia, fill = CIUOHOM)) +
+  geom_bar(stat = "identity") +
+  theme_minimal() +
+  labs(title = "Frecuencia de Ocupación (trabajo) de las hombre ",
+       x = "Ocupacion",
+       y = "Frecuencia") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "none") +  # Rotate labels
+  scale_fill_manual(values = rainbow(nrow(freq_table)))  # Different colors
+
+
+```
+
+```{r }
+freq_table <- as.data.frame(table(datos$CIUOMUJ))
+colnames(freq_table) <- c("CIUOMUJ", "Frecuencia")
+print(freq_table)
+
+freq_table <- freq_table %>%
+  arrange(desc(Frecuencia)) %>%
+  head(10)
+
+# Plot with different colors for each category
+ggplot(freq_table, aes(x = reorder(CIUOMUJ, -Frecuencia), y = Frecuencia, fill = CIUOMUJ)) +
+  geom_bar(stat = "identity") +
+  theme_minimal() +
+  labs(title = "Frecuencia de Ocupación (trabajo) de las mujeres ",
+       x = "Ocupacion",
+       y = "Frecuencia") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "none") +  # Rotate labels
+  scale_fill_manual(values = rainbow(nrow(freq_table)))  # Different colors
+
+
+```
+Se observa que la variable con mayor frecuencia es "No especificado en otro grupo", lo cual puede representar cualquier ocupación no mencionada. Por otro lado, observamos que 99 y 98 corresponden a otra variable que no tiene gran significancia, ya que se clasifica como "Ignorado". Además, se puede notar que el dato 23 tiene relevancia, ya que representa ocupaciones de peones agropecuarios, pesqueros y forestales, siendo uno de los datos más frecuentes.
+
+### Relaciones entre las variables
+
+```{r var relation}
+numerical_data <- datos[sapply(datos, is.numeric)]
+
+corr_matrix <- cor(numerical_data, use = "complete.obs")
+corr_melted <- melt(corr_matrix)
+
+ggplot(corr_melted, aes(Var1, Var2, fill = value)) + 
+  geom_tile() + 
+  scale_fill_gradient2(low = "blue", high = "red", mid = "white", midpoint = 0, limit = c(-1, 1)) + 
+  theme_minimal() + 
+  labs(title = "Matriz de Correlación", x = "", y = "") + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+La matriz de correlación muestra relaciones lineales entre las variables, se revelan fuertes correlaciones positivas entre fechas de registro y ocurrencia, así como entre las edades de hombres y mujeres. Sin embargo, las variables categóricas como pueblos, nacionalidades y escolaridad muestran correlaciones débiles o nulas entre sí y con las variables de fecha y edad, indicando que no hay una relación lineal fuerte.
 
 ## Hallazgos y conclusiones
 

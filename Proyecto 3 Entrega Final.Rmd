@@ -16,6 +16,486 @@ library(dplyr)
 library(ggplot2)
 library(reshape2)
 
+datos <- read.csv("merged_output.csv")
+
+dep_decod <- c(
+  "1" =	"Guatemala",
+  "2"	= "El Progreso",
+  "3" =	"Sacatepéquez",
+  "4" =	"Chimaltenango",
+  "5" =	"Escuintla",
+  "6" =	"Santa Rosa",
+  "7" =	"Sololá",
+  "8" =	"Totonicapán",
+  "9"	= "Quetzaltenango",
+  "10" = "Suchitepéquez",
+  "11" = "Retalhuleu",
+  "12" = "San Marcos",
+  "13" = "Huehuetenango",
+  "14" = "Quiché",
+  "15" = "Baja Verapaz",
+  "16" = "Alta Verapaz",
+  "17" = "Petén",
+  "18" = "Izabal",
+  "19" = "Zacapa",
+  "20" = "Chiquimula",
+  "21" = "Jalapa",
+  "22" = "Jutiapa"
+)
+
+pue_decod <- c(
+"1" = "Maya",
+"2" = "Garífuna",
+"3" = "Xinka",
+"4" = "Mestizo / Ladino",
+"5" = "Otro",
+"9" = "Ignorado"
+)
+
+esc_decod <- c(
+"1" = "Ninguno",
+"2" = "Primaria",
+"3" = "Básica",
+"4" = "Diversificado",
+"5" = "Universitario",
+"6" = "Postgrado",
+"9" = "Ignorado"
+)
+
+mun_decod <- c(
+  "101" = "Guatemala",
+  "102" = "Santa Catarina Pinula",
+  "103" = "San José Pinula",
+  "104" = "Palencia",
+  "105" = "Palencia",
+  "106" = "Chinautla",
+  "107" = "San Pedro Ayampuc",
+  "108" = "Mixco",
+  "109" = "San Pedro Sacatepéquez",
+  "110" = "San Juan Sacatepéquez",
+  "111" = "San Raymundo",
+  "112" = "Chuarrancho",
+  "113" = "Fraijanes",
+  "114" = "Amatitlán",
+  "115" = "Villa Nueva",
+  "116" = "Villa Canales",
+  "117" = "Petapa",
+  "201" = "Guastatoya",
+  "202" = "Morazán",
+  "203" = "San Agustín Acasaguastlán",
+  "204" = "San Cristóbal Acasaguastlán",
+  "205" = "El Jicaro",
+  "206" = "Sansare",
+  "207" = "Sanarate",
+  "208" = "San Antonio la Paz",
+  "301" = "Antigua Guatemala",
+  "302" = "Jocotenango",
+  "303" = "Pastores",
+  "304" = "Sumpango",
+  "305" = "Santo DOmingo Xenacoj",
+  "306" = "Santiago Sacatepéquez",
+  "307" = "San Bartolomé Milpas Altas",
+  "308" = "San Lucas Sacatepéquez",
+  "309" = "Santa Lucía Milpas Altas",
+  "310" = "Magdalena Milpas Altas",
+  "311" = "Santa María de Jesús",
+  "312" = "Ciudad Vieja",
+  "313" = "San Miguel Dueñas",
+  "314" = "Alotenango",
+  "315" = "San Antonio Aguas Calientes",
+  "316" = "Santa CAtarina Barahona",
+  "401" = "Chimaltenango",
+  "402" = "San José Poaquil",
+  "403" = "San Martin Jilotepeque",
+  "404" = "Comalapa",
+  "405" = "Santa Apolonia",
+  "406" = "Tecpán Guatemala",
+  "407" = "Patzún",
+  "408" = "Pochuta",
+  "409" = "Patzicia",
+  "410" = "Santa Cruz Balanyá",
+  "411" = "Acatenango",
+  "412" = "Yepocapa",
+  "413" = "San Andrés Itzapa",
+  "414" = "Parramos",
+  "415" = "Zaragosa",
+  "416" = "El Tejar",
+  "501" = "Escuintla",
+  "502" = "Santa Lucia Cotzumalguapa",
+  "503" = "La Democracia",
+  "504" = "Siquinalá",
+  "505" = "Masagua",
+  "506" = "Tiquisate",
+  "507" = "La Gomera",
+  "508" = "Guanagazapa",
+  "509" = "San José",
+  "510" = "Iztapa",
+  "511" = "Palin",
+  "512" = "San Vicente Pacaya",
+  "513" = "Nueva COncepción",
+  "514" = "Sipacate",
+  "601" = "Cuilapa",
+  "602" = "Barberena",
+  "603" = "Santa Rosa de Lima",
+  "604" = "Casillas",
+  "605" = "San Rafael las Flores",
+  "606" = "Oratorio",
+  "607" = "San Juan Tecuaco",
+  "608" = "Chiquimulilla",
+  "609" = "Taxisco",
+  "610" = "Santa Maria Ixhuatán",
+  "611" = "Guazacapán",
+  "612" = "Santa Cruz Naranjo",
+  "613" = "Pueblo Nuevo Viñas",
+  "614" = "Nueva Santa Rosa",
+  "701" = "Sololá",
+  "702" = "San José Chacayá",
+  "703" = "Santa María Visitación",
+  "704" = "Santa Lucía Utatlán",
+  "705" = "Nahualá",
+  "706" = "Santa Catarina Ixtahuacán",
+  "707" = "Santa Clara la Laguna",
+  "708" = "Concepción",
+  "709" = "San Andrés Semetabaj",
+  "710" = "Panajachel",
+  "711" = "Santa Catarina Palopó",
+  "712" = "San Antonio Palopó",
+  "713" = "San Lucás Tolimán",
+  "714" = "Santa Cruz la Laguna",
+  "715" = "San Pablo la Laguna",
+  "716" = "San MArcos la Laguna",
+  "717" = "San Juan la Laguna",
+  "718" = "San Pedro la Laguna",
+  "719" = "Santiago Atitlán",
+  "801" = "Totonicapán",
+  "802" = "San Critobal Totónicapán",
+  "803" = "San Francisco el Alto",
+  "804" = "San Andrés Xecul",
+  "805" = "Momostenango",
+  "806" = "Santa Maria Chiquimula",
+  "807" = "Santa Lucía la Reforma",
+  "808" = "San Bartolo",
+  "901" = "Quetzaltenango",
+  "902" = "Salcajá",
+  "903" =  "Olintepeque",
+  "904" = "San Carlos Sija",
+  "905" = "Sibilia",
+  "906" = "Cabricán",
+  "907" = "Cajolá",
+  "908" = "San Miguel Siguilá",
+  "909" = "Ostuncalco",
+  "910" = "San Mateo",
+  "911" = "Concepción Chiquirichapa",
+  "912" = "San Martín Sacatepequéz",
+  "913" = "Almolonga",
+  "914" = "Cantel",
+  "915" = "Huitán",
+  "916" = "Zunil",
+  "917" = "Colomba",
+  "918" = "San Francisco la Unión",
+  "919" = "El PAlmar",
+  "920" = "Coatepeque",
+  "921" = "Génova",
+  "922" = "Flores Costa Cuca",
+  "923" = "La Esperanza",
+  "924" = "Palestina de los Altos",
+  "1001" = "Mazatenango",
+  "1002" = "Cutotenango",
+  "1003" = "San Francisco Zapotitlán",
+  "1004" = "San Bernardino",
+  "1005" = "San José el Idolo",
+  "1006" = "Santo Domingo Suchitepequéz",
+  "1007" = "San Lorenzo",
+  "1008" = "Samayac",
+  "1009" = "San Pabl Jocopilas",
+  "1010" = "San Antonio Suchitepéquez",
+  "1011" = "San Miguel Panán",
+  "1012" = "San Gabriel",
+  "1013" = "Chicacao",
+  "1014" = "Patulul",
+  "1015" = "Santa Bárbara",
+  "1016" = "San Juan Bautista",
+  "1017" = "Santo Romás la Unión",
+  "1018" = "Zunilito",
+  "1019" = "Pablo Nuevo",
+  "1020" = "Río Bravo",
+  "1021" = "San José La Máquina",
+  "1101" = "Retalhuleu",
+  "1102" = "San Sebastián",
+  "1103" = "Santa Cruz Mulua",
+  "1104" = "San Martín Zapotitlán",
+  "1105" = "San Felipe",
+  "1106" = "San Andrés Villa Seca",
+  "1107" = "Champerico",
+  "1108" = "Nuevo San Carlos",
+  "1109" = "El Asintal",
+  "1201" = "San Marcos",
+  "1202" = "San Pedro Sacatepéquez",
+  "1203" = "San Antonio Sacatepéquez",
+  "1204" = "Comitancillo",
+  "1205" = "San Miguel Ixtahuacán",
+  "1206" = "Concepción Tutuapa",
+  "1207" = "Tacaná",
+  "1208" = "Sibinal",
+  "1209" = "Tajumulco",
+  "1210" = "Tejutla",
+  "1211" = "San Rafael Pié de la Cuesta",
+  "1212" = "Nuevo Progreso",
+  "1213" = "El Tumbador",
+  "1214" = "El Rodeo",
+  "1215" = "Malacatán",
+  "1216" = "Catarina",
+  "1217" = "Ayutla",
+  "1218" = "Ocós",
+  "1219" = "San Pablo",
+  "1220" = "El Quetzal",
+  "1221" = "La Reforma",
+  "1222" = "Pajapita",
+  "1223" = "Ixchiguán",
+  "1224" = "San José Ojetenán",
+  "1225" = "San Cristóbal Cucho",
+  "1226" = "Sipacapa",
+  "1227" = "Esquipulas Palo Gordo",
+  "1228" = "Río Blanco",
+  "1229" = "San Lorenzo",
+  "1230" = "La Blanca",
+  "1301" = "Huehuetenango",
+  "1302" = "Chiantla",
+  "1303" = "Malacatancito",
+  "1304" = "Cuilco",
+  "1305" = "Nentón",
+  "1306" = "San Pablo Necta",
+  "1307" = "Jacaltenango",
+  "1308" = "Soloma",
+  "1309" = "Ixtahuacán",
+  "1310" = "Santa Bárbara",
+  "1311" = "La Libertad",
+  "1312" = "La Democracia",
+  "1313" = "San Miguel Acatán",
+  "1314" = "San Rafael la Independencia",
+  "1315" = "Todos Santos Cuchumatán",
+  "1316" = "San Juán Atitán",
+  "1317" = "Santa Eulalia",
+  "1318" = "San Mateo Ixtatán",
+  "1319" = "Colotenango",
+  "1320" = "San Sebastián Huehuetenango",
+  "1321" = "Tectitán",
+  "1322" = "Concepción Huista",
+  "1323" = "San Juan Ixcoy",
+  "1324" = "San Antonio Huista",
+  "1325" = "San Sebastián Coatán",
+  "1326" = "Barillas",
+  "1327" = "Aguacatán",
+  "1328" = "San Rafael Petzal",
+  "1329" = "San Gaspar Ixchil",
+  "1330" = "Santiago Chimaltenango",
+  "1331" = "Santa Ana Hustia",
+  "1332" = "Unión Cantinil",
+  "1333" = "Petatán",
+  "1401" = "Santa Cruz del Quiché",
+  "1402" = "Chiché",
+  "1403" = "Chinique",
+  "1404" = "Zacualpa",
+  "1405" = "Chajul",
+  "1406" = "Chichicastenango",
+  "1407" = "Patzité",
+  "1408" = "San Antonio Ilotenango",
+  "1409" = "San Pedro Jocolipas",
+  "1410" = "Cunén",
+  "1411" = "San Juan Cotzal",
+  "1412" = "Joyabaj",
+  "1413" = "Nebaj",
+  "1414" = "San Andrés Sajcabajá",
+  "1415" = "Uspantán",
+  "1416" = "Sacapulas",
+  "1417" = "San Bartolomé Jocotenango",
+  "1418" = "Canillá",
+  "1419" = "Chicamán",
+  "1420" = "Ixcán",
+  "1421" = "Pachalum",
+  "1501" = "Salamá",
+  "1502" = "San Miguel Chicaj",
+  "1503" = "Rabinal",
+  "1504" = "Cubulco",
+  "1505" = "Granados",
+  "1506" = "El Chol",
+  "1507" = "San Jerónimo",
+  "1508" = "Purulhá",
+  "1601" = "Cobán",
+  "1602" = "Santa Cruz Verapaz",
+  "1603" = "San Cristobal Verapaz",
+  "1604" = "Tactic",
+  "1605" = "Tamahú",
+  "1606" = "Tucurú",
+  "1607" = "Panzós",
+  "1608" = "Senahú",
+  "1609" = "San Pedro Carchá",
+  "1610" = "San Juan Chamelco",
+  "1611" = "Lanquín",
+  "1612" = "Cahabón",
+  "1613" = "Chisec",
+  "1614" = "Chahal",
+  "1615" = "Fray Bartolomé de las Casas",
+  "1616" = "Santa Catalina la Tinta",
+  "1617" = "Raxruhá",
+  "1701" = "Flores",
+  "1702" = "San José",
+  "1703" = "San Benito",
+  "1704" = "San Andrés",
+  "1705" = "La Libertad",
+  "1706" = "San Francisco",
+  "1707" = "Santa Ana",
+  "1708" = "Dolores",
+  "1709" = "San Luis",
+  "1710" = "Sayaxché",
+  "1711" = "Melchor de Mencos",
+  "1712" = "Poptún",
+  "1713" = "Las Cruces",
+  "1714" = "El Chal",
+  "1801" = "Puetto Barrios",
+  "1802" = "Livingston",
+  "1803" = "El Estor",
+  "1804" = "Morales",
+  "1805" = "Los Amates",
+  "1901" = "Zacapa",
+  "1902" = "Estanzuela",
+  "1903" = "Río Hondo",
+  "1904" = "Gualán",
+  "1905" = "Teculután",
+  "1906" = "Usumatlán",
+  "1907" = "Cabañas",
+  "1908" = "San Diego",
+  "1909" = "La Unión",
+  "1910" = "Huité",
+  "1911" = "San Jorge",
+  "2001" = "Chiquimula",
+  "2002" = "San José LA Arada",
+  "2003" = "San Juan Ermita",
+  "2004" = "Jocotán",
+  "2005" = "Camotán",
+  "2006" = "Olopa",
+  "2007" = "Esquipulas",
+  "2008" = "Concepción Las Minas",
+  "2009" = "Quetzaltepeque",
+  "2010" = "San Jacinto",
+  "2011" = "Ipala",
+  "2101" = "Jalapa",
+  "2102" = "San Pedro Pinula",
+  "2103" = "San Luis Jilotepeque",
+  "2104" = "San Manuel Chaparrón",
+  "2105" = "San Carlos Alzatate",
+  "2106" = "Monjas",
+  "2107" = "Mataquescuintla",
+  "2201" = "Jutiapa",
+  "2202" = "El Progreso",
+  "2203" = "Santa Catarina Mita",
+  "2204" = "Agua Blanca",
+  "2205" = "Asunción Mita",
+  "2206" = "Yupiltepeque",
+  "2207" = "Atescatempa",
+  "2208" = "Jerez",
+  "2209" = "El Adelanto",
+  "2210" = "Zapotitlán",
+  "2211" = "Comapa",
+  "2212" = "Jalpatagua",
+  "2213" = "Conguaco",
+  "2214" = "Moyuta",
+  "2215" = "Pasaco",
+  "2216" = "San José Acatempa",
+  "2217" = "Quesada"
+  )
+
+nach_decod <- c(
+  "32" = "Argentina",
+  "68" = "Bolivia",
+  "152" = "Chile",
+  "170" = "Colombia",
+  "188" = "Costa Rica",
+  "192" = "Cuba",
+  "214" = "República Dominicana",
+  "218" = "Ecuador",
+  "222" = "El Salvador",
+  "276" = "Alemania",
+  "320" = "Guatemala",
+  "340" = "Honduras",
+  "364" = "Irán",
+  "484" = "México",
+  "568" = "G. Bretaña E Irl. Del N.",
+  "600" = "Paraguay",
+  "604" = "Perú",
+  "608" = "Filipinas",
+  "718" = "Holanda (Paises Bajos)",
+  "720" = "Nicaragua",
+  "725" = "República Checa",
+  "752" = "Suecia",
+  "826" = "Reino Unido",
+  "840" = "Estados Unidos",
+  "1034" = "Republica Bolivariana de Venezuela",
+  "1020" = "Francia",
+  "9999" = "Ignorado"
+)
+
+ciuo_decod <- c(
+  "1.0" = "Oficiales de las fuerzas armadas",
+  "3.0" = "Otros miembros de las fuerzas armadas",
+  "11.0" = "Directores ejecutivos, personal directivo de la administración pública y miembros del poder ejecutivo y de los cuerpos l",
+  "12.0" = "Directores administradores y comerciales",
+  "14.0" = "Gerentes de hoteles, restaurantes, comercios y otros servicios",
+  "21.0" = "Profesionales de las ciencias y de la ingeniería",
+  "22.0" = "Profesionales de la salud",
+  "23.0" = "Profesionales de la enseñanzas",
+  "24.0" = "Especialistas en organización de la administración pública y de empresa",
+  "25.0" = "Profesionales de tecnología de la información y las comunicaciones",
+  "26.0" = "Profesionales en derecho, en ciencias sociales y culturales",
+  "31.0" = "Profesionales de las ciencias y la ingeniería de nivel medio",
+  "32.0" = "Profesionales de nivel medio de la salud",
+  "33.0" = "Profesionales de nivel medio en operaciones financieras y administrativas",
+  "34.0" = "Profesionales de nivel medio de servicios jurídicos, sociales, culturales y afines",
+  "35.0" = "Técnicos de la tecnología de la información y las comunicaciones",
+  "41.0" = "Oficinistas",
+  "42.0" = "Empleados de trato directo con el público",
+  "43.0" = "Empleados contables y encargados del registro de materiales",
+  "44.0" = "Otro personal de apoyo administrativo",
+  "51.0" = "Trabajadores de los servicios personales",
+  "52.0" = "Vendedores",
+  "53.0" = "Trabajadores de los cuidados personales",
+  "54.0" = "Personal de los servicios de protección",
+  "61.0" = "Agricultores y trabajadores calificados de explotaciones agropecuarias con destino al mercado",
+  "62.0" = "Trabajadores forestales calificados, pescadores y cazadores",
+  "71.0" = "Oficiales y operarios de la construcción excluyendo electricistas",
+  "72.0" = "Oficiales y operarios de la metalurgia, la construcción mecánica y afines",
+  "73.0" = "Artesanos y operarios de las artes gráficas",
+  "74.0" = "Trabajadores especializados en electricidad y la elecretecnología",
+  "75.0" = "Operarios y oficiales de procesamiento de alimentos, de la confección, ebanistas, otros artesanos y afines",
+  "81.0" = "Operadores de instalaciones fijas y máquinas",
+  "82.0" = "Ensambladores",
+  "83.0" = "Conductores de vehículos y operadores de equipos pesados móviles",
+  "91.0" = "Limpiadores y asistentes",
+  "92.0" = "Peones agropecuarios, pesqueros y forestales",
+  "93.0" = "Peones de la minería, la construcción, la industria manufacturera y el transporte",
+  "94.0" = "Ayudantes de preparación de alimentos",
+  "95.0" = "Vendedores ambulantes de servicios y afines",
+  "96.0" = "Recolectores de desechos y otras ocupaciones elementales",
+  "97.0" = "No especificado en otro grupo",
+  "98.0" = "No especificado en otro grupo",
+  "99.0" = "Ignorado"
+)
+
+
+
+datos$DEPREG <- dep_decod[as.character(datos$DEPREG)]
+datos$DEPOCU <- dep_decod[as.character(datos$DEPOCU)]
+datos$PUEHOM <- pue_decod[as.character(datos$PUEHOM)]
+datos$PUEMUJ <- pue_decod[as.character(datos$PUEMUJ)]
+datos$ESCHOM <- esc_decod[as.character(datos$ESCHOM)]
+datos$ESCMUJ <- esc_decod[as.character(datos$ESCMUJ)]
+datos$MUPREG <- mun_decod[as.character(datos$MUPREG)]
+datos$MUPOCU <- mun_decod[as.character(datos$MUPOCU)]
+datos$CIUOHOM <- ciuo_decod[as.character(datos$CIUOHOM)]
+datos$CIUOMUJ <- ciuo_decod[as.character(datos$CIUOMUJ)]
+
+colnames(datos)
+
 ```
 
 ## Situación Problemática
@@ -134,8 +614,6 @@ Se tienen las siguientes variables como númericas:
 - **EDADMUJ** - Edad de la mujer
 
 ```{r num var exploration}
-
-datos <- read.csv("merged_output.csv")
 
 media_EDADHOM <- mean(datos$EDADHOM[datos$EDADHOM != 999], na.rm = TRUE)
 media_EDADMUJ <- mean(datos$EDADMUJ[datos$EDADMUJ != 999], na.rm = TRUE)
@@ -279,7 +757,7 @@ esc_decod <- c(
 "9" = "Ingorado"
 )
 
-datos_categoricos <- datos_categoricos %>%
+datos <- datos_categoricos %>%
   mutate(
     DEPREG = dep_decod[as.character(DEPREG)],
     DEPOCU = dep_decod[as.character(DEPOCU)],
@@ -342,30 +820,6 @@ ggplot(freq_table, aes(x = reorder(DEPREG, -Frecuencia), y = Frecuencia, fill = 
 
 
 ```
-
-1	Guatemala
-2	El Progreso
-3	Sacatepéquez
-4	Chimaltenango
-5	Escuintla
-6	Santa Rosa
-7	Sololá
-8	Totonicapán
-9	Quetzaltenango
-10	Suchitepéquez
-11	Retalhuleu
-12	San Marcos
-13	Huehuetenango
-14	Quiché
-15	Baja Verapaz
-16	Alta Verapaz
-17	Petén
-18	Izabal
-19	Zacapa
-20	Chiquimula
-21	Jalapa
-22	Jutiapa
-
 
 En base a la gráfica mostrada observamos que el mayor registros de divorcios es en el departamento de Guatemala, En el segundo puesto tenemos a Quetzaltenango con 1485 registros de divorcio, Por último se debe de tomar en cuenta que el departamento de Solola ha marcado el menor registro de divorcios.
 
@@ -461,12 +915,6 @@ ggplot(freq_table, aes(x = reorder(PUEHOM, -Frecuencia), y = Frecuencia, fill = 
 
 
 ```
-1	Maya
-2	Garífuna
-3	Xinka
-4	Mestizo / Ladino
-5	Otro
-9	Ignorado
 
 Se observa que la mayor frecuencia es IGNORADO aunque observamos en el segundo puesto que los Mestizos/Ladinos con un total de 41402 registros, luego estan Maya y la menor frecuencia, se encuentra el pueblo Xinka con un total de 12 registros.
 
@@ -489,17 +937,11 @@ ggplot(freq_table, aes(x = reorder(PUEMUJ, -Frecuencia), y = Frecuencia, fill = 
 
 
 ```
-1	Maya
-2	Garífuna
-3	Xinka
-4	Mestizo / Ladino
-5	Otro
-9	Ignorado
 
 Se observa que la mayor frecuencia es IGNORADO aunque observamos en el segundo puesto que los Mestizos/Ladinos con un total de 32621 registros, luego estan Maya y la menor frecuencia, se encuentra el pueblo Xinka con un total de 16 registros.
 
 
-## Nacionalidad de la Hombre
+## Nacionalidad del Hombre
 ```{r }
 freq_table <- as.data.frame(table(datos$NACHOM))
 colnames(freq_table) <- c("NACHOM", "Frecuencia")
@@ -573,13 +1015,6 @@ ggplot(freq_table, aes(x = reorder(ESCHOM, -Frecuencia), y = Frecuencia, fill = 
 
 
 ```
-1	Ninguno
-2	Primaria
-3	Básica
-4	Diversificado
-5	Universitario
-6	Postgrado
-9	Ignorado
 
 Se observa que la mayor frecuencia corresponde a la variable IGNORADO, lo cual no nos indica si la población está educada o no. Por otro lado, observamos que la variable 'diversificado' (15,951) es la más frecuente y tiene cierta significancia. Otro dato importante a resaltar es que la variable 'ninguno' es la tercera más frecuente, lo cual podríamos relacionar con la causa del divorcio, si esta está vinculada con la educación.
 

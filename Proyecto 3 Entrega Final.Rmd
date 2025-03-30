@@ -494,7 +494,7 @@ datos$MUPOCU <- mun_decod[as.character(datos$MUPOCU)]
 datos$CIUOHOM <- ciuo_decod[as.character(datos$CIUOHOM)]
 datos$CIUOMUJ <- ciuo_decod[as.character(datos$CIUOMUJ)]
 
-colnames(datos)
+sum(is.na(datos$AÑOOCU))
 
 ```
 
@@ -514,7 +514,7 @@ Variable Categórica
 MUPREG  - Municipio de registro
 Representa el municipio en el cual se registró el evento ( 0101-2217 )
 
-Variable Númerica
+Variable Categórica
 MESREG  - Mes de registro
 Representa el mes en el cual se registró el evento
 (1-12)
@@ -522,10 +522,10 @@ Representa el mes en el cual se registró el evento
 Variable Númerica
 AÑOREG  - Año de registro es representado desde (2012-2024)
 
-Variable Númerica
+Variable Categórica
 DIAOCU  - Dia de ocurrencia (1-30)
 
-Variable Númerica
+Variable Ctaegórica
 MESOCU  - Mes de ocurrencia (1-12)
 
 Variable Númerica
@@ -602,27 +602,60 @@ Se observa que hay un total de 19 variables a medir. De estas existen 7 variable
 
 ## Análisis Exploratorio
 
+### Outliers 
+
+```{r numeric outliers}
+
+media_edadH <- mean(datos$EDADHOM[datos$EDADHOM != 999], na.rm = TRUE)
+media_edadM <- mean(datos$EDADMUJ[datos$EDADMUJ != 999], na.rm = TRUE)
+datos$EDADHOM[datos$EDADHOM == 999] <- media_edadH
+datos$EDADMUJ[datos$EDADMUJ == 999] <- media_edadM
+
+```
+
+Analizando las variables numéricas se encontraron varios datos átipicos que no permiten analizar correctamente este dataset. El primero de ellos es que en AÑOOCU habian datos NA y en las variables EDADHOM y EDADMUJ se encontro que algunas edades estaban colocadas como 999 indicando que la edad era desconocida. En este caso este valor se interpreta como NA y se cambio el 999 por la media de cada edad correpondiente a su sexo.
+
+```{r categoric outliers}
+categoricas_vars <- c(
+ "DIAOCU", "MESOCU", "DEPREG", "MUPREG", "MESREG", "DEPOCU", "MUPOCU", "PUEHOM", "PUEMUJ", "NACHOM", "NACMUJ", "ESCHOM", "ESCMUJ", "CIUOHOM", "CIUOMUJ"
+)
+
+# Función para encontrar los valores menos frecuentes
+valores_menos_frecuentes <- function(data, variable) {
+  tabla_frecuencias <- table(data[[variable]])
+  min_frecuencia <- min(tabla_frecuencias)
+  valores_menos_frecuentes <- names(tabla_frecuencias[tabla_frecuencias == min_frecuencia])
+  return(valores_menos_frecuentes)
+}
+
+# Aplicar la función a cada variable categórica
+resultados <- lapply(categoricas_vars, function(var) {
+  valores <- valores_menos_frecuentes(datos, var)
+  return(list(variable = var, valores_menos_frecuentes = valores))
+})
+
+# Imprimir los resultados
+for (resultado in resultados) {
+  cat("Variable:", resultado$variable, "\n")
+  cat("Valores menos frecuentes:", paste(resultado$valores_menos_frecuentes, collapse = ", "), "\n\n")
+}
+
+```
+
+De esta forma podemos ver los valores menos comunes (valores atípicos) para las variables categoricas, no hay la necesidad de realizar ninguna transformación para los datos. Es importante recalcar que estos datos es importante contrastarlos con el resto de las variables para identificar si realmente son datos átipicos. Este analisis se realizará más adelante en el analisis categorico de las variables.
+
 ### Exploración variables númericas
 
 Se tienen las siguientes variables como númericas:
 
 - **AÑOREG** - Año de registro
-- **DIAOCU** - Día de ocurrencia
-- **MESOCU** - Mes de ocurrencia
 - **AÑOOCU** - Año de ocurrencia  
 - **EDADHOM** - Edad del hombre 
 - **EDADMUJ** - Edad de la mujer
 
 ```{r num var exploration}
 
-media_EDADHOM <- mean(datos$EDADHOM[datos$EDADHOM != 999], na.rm = TRUE)
-media_EDADMUJ <- mean(datos$EDADMUJ[datos$EDADMUJ != 999], na.rm = TRUE)
-
-datos$EDADHOM[datos$EDADHOM == 999] <- media_EDADHOM
-datos$EDADMUJ[datos$EDADMUJ == 999] <- media_EDADMUJ
-
-
-datos_numericos <- datos[, c("AÑOREG", "DIAOCU", "MESOCU", "AÑOOCU", "EDADHOM", "EDADMUJ")]
+datos_numericos <- datos[, c("AÑOREG", "AÑOOCU", "EDADHOM", "EDADMUJ")]
 
 calcular_estadisticas <- function(columna) {
   lista <- list(
@@ -676,15 +709,21 @@ El análisis de las variables numéricas revela tendencias significativas en los
 Respecto a las edades (EDADHOM y EDADMUJ), las medias son de aproximadamente 36 y 33 años respectivamente, con una dispersión relativamente baja. Esto sugiere que la mayoría de los registros corresponden a adultos jóvenes (este dato debe ser corroborado debido a la omisión de muchas edades en el dataset). El rango de los hombres es mayor (15 - 98 años) en comparación con el de las mujeres (15 - 81 años), lo que podría reflejar una mayor presencia de hombres de mayor edad en los registros. En general, la distribución de las edades es relativamente homogénea.
 
 ```{r}
-ggplot(datos_numericos, aes(x = EDADHOM, y = EDADMUJ)) +
+media_edad_hombre <- mean(datos_numericos$EDADHOM, na.rm = TRUE)
+media_edad_mujer <- mean(datos_numericos$EDADMUJ, na.rm = TRUE)
+
+datos_filtrados <- datos_numericos[!(datos_numericos$EDADHOM == media_edad_hombre & datos_numericos$EDADMUJ == media_edad_mujer), ]
+
+ggplot(datos_filtrados, aes(x = EDADHOM, y = EDADMUJ)) +
   geom_point(alpha = 0.4, color = "darkgreen") +
   geom_abline(slope = 1, intercept = 0, color = "gray", linetype = "dashed") +
   labs(
-    title = "Relación entre la edad del hombre y la mujer al divorciarse",
+    title = "Relación entre la edad del hombre y la mujer al divorciarse (excluyendo medias)",
     x = "Edad del hombre",
     y = "Edad de la mujer"
   ) +
   theme_minimal()
+
 ```
 A traves del grafico de dispersion se puede observar con mayor detalle la relacion entre las edades de los hombres y las mujeres divorciados en el conjunto de datos. La linea de identidad nos ayuda a identificar de manera mas visual que las edades de los hombres suelen ser mayores que las de las mujeres. Cabe notar que aproximadamente antes de los 35 años, las edades entre las personas son similares, y luego de este numero las edades de los hombres suele aumenta en relacion a las de las mujeres; esto se puede observar ya que la mayoria de los datos pasados los 35 años se encuentran debajo de la linea de identidad.
 
@@ -692,6 +731,8 @@ A traves del grafico de dispersion se puede observar con mayor detalle la relaci
 
 Se tienen las siguientes variables como categóricas:
 
+- **DIAOCU** - Día de ocurrencia
+- **MESOCU** - Mes de ocurrencia
 - **DEPREG** - Departamento de registro  
 - **MUPREG** - Municipio de registro  
 - **MESREG** - Mes de registro  
@@ -709,63 +750,6 @@ Se tienen las siguientes variables como categóricas:
 ```{r cat var exploration}
 
 datos_categoricos <- datos[, c("DEPREG", "MUPREG", "DEPOCU", "MUPOCU", "PUEHOM", "PUEMUJ", "NACHOM", "NACMUJ", "ESCHOM", "ESCMUJ", "CIUOHOM", "CIUOMUJ")]
-```
-
-Para entender mejor los datos, se decodificaran algunas de las variables categoricas para mejorar la legibilidad.
-```{r}
-dep_decod <- c(
-  "1" =	"Guatemala",
-  "2"	= "El Progreso",
-  "3" =	"Sacatepéquez",
-  "4" =	"Chimaltenango",
-  "5" =	"Escuintla",
-  "6" =	"Santa Rosa",
-  "7" =	"Sololá",
-  "8" =	"Totonicapán",
-  "9"	= "Quetzaltenango",
-  "10" = "Suchitepéquez",
-  "11" = "Retalhuleu",
-  "12" = "San Marcos",
-  "13" = "Huehuetenango",
-  "14" = "Quiché",
-  "15" = "Baja Verapaz",
-  "16" = "Alta Verapaz",
-  "17" = "Petén",
-  "18" = "Izabal",
-  "19" = "Zacapa",
-  "20" = "Chiquimula",
-  "21" = "Jalapa",
-  "22" = "Jutiapa"
-)
-
-pue_decod <- c(
-"1" = "Maya",
-"2" = "Garífuna",
-"3" = "Xinka",
-"4" = "Mestizo / Ladino",
-"5" = "Otro",
-"9" = "Ignorado"
-)
-
-esc_decod <- c(
-"1" = "Ninguno",
-"2" = "Primaria",
-"3" = "Básica",
-"4" = "Diversificado",
-"5" = "Universitario",
-"6" = "Postgrado",
-"9" = "Ingorado"
-)
-
-datos <- datos_categoricos %>%
-  mutate(
-    DEPREG = dep_decod[as.character(DEPREG)],
-    DEPOCU = dep_decod[as.character(DEPOCU)],
-    PUEHOM = pue_decod[as.character(PUEHOM)],
-    PUEMUJ = pue_decod[as.character(PUEMUJ)],
-    ESCHOM = esc_decod[as.character(ESCHOM)],
-    ESCMUJ = esc_decod[as.character(ESCMUJ)],
-  )
 ```
 
 Las variables que se decodificaron fueron seleccionadas debido a que estas son relevantes para enteder los datos a simple vista. Las variables de nacionalidad, municipio y ocupacion no fueron decodificadas debido a la cantidad de datos en estas, los cuales, al decodificar, podrian causar complicaciones en la legibilidad y comprension de los datos.

@@ -405,7 +405,7 @@ mun_decod <- c(
   "2217" = "Quesada"
   )
 
-nach_decod <- c(
+nac_decod <- c(
   "32" = "Argentina",
   "68" = "Bolivia",
   "152" = "Chile",
@@ -491,6 +491,8 @@ datos$ESCHOM <- esc_decod[as.character(datos$ESCHOM)]
 datos$ESCMUJ <- esc_decod[as.character(datos$ESCMUJ)]
 datos$MUPREG <- mun_decod[as.character(datos$MUPREG)]
 datos$MUPOCU <- mun_decod[as.character(datos$MUPOCU)]
+datos$NACHOM <- nac_decod[as.character(datos$NACHOM)]
+datos$NACMUJ <- nac_decod[as.character(datos$NACMUJ)]
 datos$CIUOHOM <- ciuo_decod[as.character(datos$CIUOHOM)]
 datos$CIUOMUJ <- ciuo_decod[as.character(datos$CIUOMUJ)]
 
@@ -747,19 +749,20 @@ Se tienen las siguientes variables como categóricas:
 - **CIUOHOM** - Ocupación del hombre (según CIUO-08)
 - **CIUOMUJ** - Ocupación de la mujer (según CIUO-08)
 
-```{r cat var exploration}
-
-datos_categoricos <- datos[, c("DEPREG", "MUPREG", "DEPOCU", "MUPOCU", "PUEHOM", "PUEMUJ", "NACHOM", "NACMUJ", "ESCHOM", "ESCMUJ", "CIUOHOM", "CIUOMUJ")]
-```
-
 Las variables que se decodificaron fueron seleccionadas debido a que estas son relevantes para enteder los datos a simple vista. Las variables de nacionalidad, municipio y ocupacion no fueron decodificadas debido a la cantidad de datos en estas, los cuales, al decodificar, podrian causar complicaciones en la legibilidad y comprension de los datos.
-```{r}
+
+```{r cat var exploration}
+datos_categoricos <- datos[, c("DEPREG", "MUPREG", "DEPOCU", "MUPOCU", "PUEHOM", "PUEMUJ", "NACHOM", "NACMUJ", "ESCHOM", "ESCMUJ", "CIUOHOM", "CIUOMUJ", "DIAOCU", "MESOCU")]
+
 generar_tabla_frecuencia <- function(columna) {
   tabla <- table(columna)
-  return(tabla)
+  # Convertir la tabla a un dataframe para mejor visualización
+  tabla_df <- as.data.frame(tabla)
+  names(tabla_df) <- c("Categoría", "Frecuencia")
+  return(tabla_df)
 }
 
-tablas_frecuencia <- head(lapply(datos_categoricos, generar_tabla_frecuencia),10)
+tablas_frecuencia <- lapply(datos_categoricos, generar_tabla_frecuencia)
 
 for (variable in names(tablas_frecuencia)) {
   cat("\n", variable, "\n")
@@ -770,11 +773,6 @@ for (variable in names(tablas_frecuencia)) {
 El análsis de las tablas de frecuencia de DEPREG y MUPREG revela una distribución desigual de los datos. En DEPREG, la categoría con mayor frecuencia es la primera, con 31,204 casos, lo que representa una concentración significativa en comparación con las demás. Otras categorías muestran una distribución más dispersa, con valores que oscilan entre 952 y 6,827, lo que sugiere una fuerte asimetría en los datos. Este patrón indica que la mayoría de los registros pertenecen a una sola categoría, mientras que las demás están distribuidas en menor medida.
 
 Por otro lado, MUPREG presenta una ayor dispersión con un número más elevado de categorías, algunas con muy pocos registros. La categoría más frecuente (101) tiene 23,848 casos, superando ampliamente a las demás, mientras que muchas otras tienen frecuencias menores a 1,000. Esto sugiere que ciertos valores dominan la distribución mientras que la mayoría son poco representativos. La alta variabilidad en la distribución de frecuencia indica la necesidad de un análisis más profundo para comprender la relevancia de cada categoría y su impacto en el conjunto de datos.
-
-```{r }
-datos <- read.csv("merged_output.csv")
-
-```
 
 Se estaran utilizando las siguientes variables para realizar un analisis categorico: "DEPREG", "MUPREG", "DEPOCU", "MUPOCU","PUEHOM", "PUEMUJ", "NACHOM", "NACMUJ","ESCHOM", "ESCMUJ", "CIUOHOM", "CIUOMUJ"
 ```{r }

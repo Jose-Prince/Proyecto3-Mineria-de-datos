@@ -508,7 +508,26 @@ datos_decod$CIUOMUJ <- ciuo_decod[as.character(datos$CIUOMUJ)]
 
 ## Situación Problemática
 
+### Planteamiento del Problema
+En las últimas décadas, la edad a la que las parejas se divorciaron ha cambiado considerablemente. La edad media de divorcio se ha incrementado, y varios estudios sugieren que la presión laboral, la dificultad para equilibrar las responsabilidades familiares y el estrés económico pueden influir en la estabilidad de los matrimonios. Sin embargo, existe la pregunta de si el momento en que las parejas deciden divorciarse está relacionado con su edad y con la dinámica de trabajo que enfrentan.
+
+El comportamiento de las parejas frente al divorcio está condicionado por muchos factores, como el avance de la carrera profesional, las expectativas familiares y las responsabilidades laborales. Los hombres y mujeres que se casan a edades más jóvenes suelen enfrentar mayores desafíos relacionados con la madurez emocional, el establecimiento de una carrera profesional y la formación de una familia. Estos factores pueden influir en la aparición de tensiones y conflictos, que eventualmente podrían desembocar en una separación.
+
+Por otro lado, las parejas que se divorcian a edades más avanzadas podrían enfrentar diferentes retos, como la adaptación a cambios en sus roles laborales, el vacío de los hijos ya adultos o los efectos del envejecimiento. Además, el tipo de ocupación y las horas de trabajo pueden jugar un papel importante en la acumulación de tensiones dentro de la relación, afectando la duración del matrimonio y el momento en que se toma la decisión de divorciarse.
+
+### Pregunta de Investigación:
+¿Cómo influye la edad de los cónyuges y su ocupación en el momento en que se produce el divorcio y en la estabilidad matrimonial?
+
 ## Problema Científico
+En las últimas décadas, los patrones de divorcio han mostrado cambios significativos, con un incremento en la edad promedio de las parejas que deciden separarse. Si bien existen diversos factores que influyen en la disolución matrimonial, la relación entre la edad de los cónyuges, su ocupación y la estabilidad matrimonial sigue siendo un área de investigación relevante y poco comprendida.
+
+La dinámica laboral, las presiones económicas y las expectativas sociales pueden generar tensiones que afectan la convivencia y el bienestar emocional de las parejas. Por un lado, las personas que contraen matrimonio a edades más jóvenes suelen enfrentar desafíos asociados con la inmadurez emocional, la falta de estabilidad financiera y la incertidumbre profesional. Por otro lado, las parejas que deciden separarse a edades más avanzadas pueden verse influidas por otros factores, como el desgaste emocional acumulado, la adaptación a nuevas etapas de la vida o los cambios en sus roles laborales.
+
+Además, el tipo de ocupación desempeñado por cada cónyuge puede influir significativamente en la estabilidad matrimonial. Profesiones con largas jornadas laborales, altos niveles de estrés o falta de conciliación entre la vida personal y profesional pueden incrementar el riesgo de divorcio. A su vez, las diferencias en los ingresos económicos y las percepciones de equidad en las responsabilidades familiares también pueden desencadenar conflictos.
+
+Por lo tanto, resulta fundamental investigar cómo la edad de los cónyuges y su situación laboral influyen en el momento en que se produce el divorcio. Comprender estos factores permitirá no solo identificar los principales determinantes del divorcio en diferentes etapas de la vida, sino también contribuir al desarrollo de políticas públicas y programas de apoyo que promuevan relaciones más estables y saludables.
+
+Este estudio se centrará en explorar la relación entre la edad de los cónyuges, sus ocupaciones y la probabilidad de divorcio, con el objetivo de proporcionar una visión integral sobre las dinámicas matrimoniales contemporáneas.
 
 ## Objetivos
 

@@ -11,6 +11,9 @@ knitr::opts_chunk$set(echo = FALSE)
 
 # Proyecto 3 Análisis Exploratorio
 
+### Enlace a Github
+[[https://github.com/Jose-Prince/Proyecto3-Mineria-de-datos]]
+
 ```{r echo=FALSE, warning=FALSE}
 library(dplyr)
 library(ggplot2)

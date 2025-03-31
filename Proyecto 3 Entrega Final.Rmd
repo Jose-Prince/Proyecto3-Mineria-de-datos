@@ -11,12 +11,20 @@ knitr::opts_chunk$set(echo = FALSE)
 
 # Proyecto 3 Análisis Exploratorio
 
-```{r data loading}
+```{r}
 library(dplyr)
 library(ggplot2)
 library(reshape2)
+library(factoextra)
+library(NbClust)
+library(hopkins)
+library(cluster)
+```
+
+```{r data loading}
 
 datos <- read.csv("merged_output.csv")
+datos_decod <- datos 
 
 dep_decod <- c(
   "1" =	"Guatemala",
@@ -483,20 +491,18 @@ ciuo_decod <- c(
 
 
 
-datos$DEPREG <- dep_decod[as.character(datos$DEPREG)]
-datos$DEPOCU <- dep_decod[as.character(datos$DEPOCU)]
-datos$PUEHOM <- pue_decod[as.character(datos$PUEHOM)]
-datos$PUEMUJ <- pue_decod[as.character(datos$PUEMUJ)]
-datos$ESCHOM <- esc_decod[as.character(datos$ESCHOM)]
-datos$ESCMUJ <- esc_decod[as.character(datos$ESCMUJ)]
-datos$MUPREG <- mun_decod[as.character(datos$MUPREG)]
-datos$MUPOCU <- mun_decod[as.character(datos$MUPOCU)]
-datos$NACHOM <- nac_decod[as.character(datos$NACHOM)]
-datos$NACMUJ <- nac_decod[as.character(datos$NACMUJ)]
-datos$CIUOHOM <- ciuo_decod[as.character(datos$CIUOHOM)]
-datos$CIUOMUJ <- ciuo_decod[as.character(datos$CIUOMUJ)]
-
-sum(is.na(datos$AÑOOCU))
+datos_decod$DEPREG <- dep_decod[as.character(datos$DEPREG)]
+datos_decod$DEPOCU <- dep_decod[as.character(datos$DEPOCU)]
+datos_decod$PUEHOM <- pue_decod[as.character(datos$PUEHOM)]
+datos_decod$PUEMUJ <- pue_decod[as.character(datos$PUEMUJ)]
+datos_decod$ESCHOM <- esc_decod[as.character(datos$ESCHOM)]
+datos_decod$ESCMUJ <- esc_decod[as.character(datos$ESCMUJ)]
+datos_decod$MUPREG <- mun_decod[as.character(datos$MUPREG)]
+datos_decod$MUPOCU <- mun_decod[as.character(datos$MUPOCU)]
+datos_decod$NACHOM <- nac_decod[as.character(datos$NACHOM)]
+datos_decod$NACMUJ <- nac_decod[as.character(datos$NACMUJ)]
+datos_decod$CIUOHOM <- ciuo_decod[as.character(datos$CIUOHOM)]
+datos_decod$CIUOMUJ <- ciuo_decod[as.character(datos$CIUOMUJ)]
 
 ```
 
@@ -608,10 +614,10 @@ Se observa que hay un total de 19 variables a medir. De estas existen 7 variable
 
 ```{r numeric outliers}
 
-media_edadH <- mean(datos$EDADHOM[datos$EDADHOM != 999], na.rm = TRUE)
-media_edadM <- mean(datos$EDADMUJ[datos$EDADMUJ != 999], na.rm = TRUE)
-datos$EDADHOM[datos$EDADHOM == 999] <- media_edadH
-datos$EDADMUJ[datos$EDADMUJ == 999] <- media_edadM
+media_edadH <- mean(datos_decod$EDADHOM[datos_decod$EDADHOM != 999], na.rm = TRUE)
+media_edadM <- mean(datos_decod$EDADMUJ[datos_decod$EDADMUJ != 999], na.rm = TRUE)
+datos_decod$EDADHOM[datos_decod$EDADHOM == 999] <- media_edadH
+datos_decod$EDADMUJ[datos_decod$EDADMUJ == 999] <- media_edadM
 
 ```
 
@@ -632,7 +638,7 @@ valores_menos_frecuentes <- function(data, variable) {
 
 # Aplicar la función a cada variable categórica
 resultados <- lapply(categoricas_vars, function(var) {
-  valores <- valores_menos_frecuentes(datos, var)
+  valores <- valores_menos_frecuentes(datos_decod, var)
   return(list(variable = var, valores_menos_frecuentes = valores))
 })
 
@@ -657,7 +663,7 @@ Se tienen las siguientes variables como númericas:
 
 ```{r num var exploration}
 
-datos_numericos <- datos[, c("AÑOREG", "AÑOOCU", "EDADHOM", "EDADMUJ")]
+datos_numericos <- datos_decod[, c("AÑOREG", "AÑOOCU", "EDADHOM", "EDADMUJ")]
 
 calcular_estadisticas <- function(columna) {
   lista <- list(
@@ -684,7 +690,6 @@ for (variable in names(estadisticas)) {
     cat(nombre_estadistica, ":", estadisticas[[variable]][[nombre_estadistica]], "\n")
   }
 }
-
 
 ```
 
@@ -1089,6 +1094,96 @@ ggplot(freq_table, aes(x = reorder(CIUOMUJ, -Frecuencia), y = Frecuencia, fill =
 
 ```
 Se observa que la variable con mayor frecuencia es "No especificado en otro grupo", lo cual puede representar cualquier ocupación no mencionada. Por otro lado, observamos que 99 y 98 corresponden a otra variable que no tiene gran significancia, ya que se clasifica como "Ignorado". Además, se puede notar que el dato 23 tiene relevancia, ya que representa ocupaciones de peones agropecuarios, pesqueros y forestales, siendo uno de los datos más frecuentes.
+
+### Tendencia de agrupamiento y número de clusters
+
+```{r Hopkins and elbow}
+new_datos <- datos[!is.na(datos$AÑOOCU), ]
+
+# 2. Eliminar filas con 999 en EDADHOM o EDADMUJ
+new_datos <- new_datos[!(new_datos$EDADHOM == 999 | new_datos$EDADMUJ == 999), ]
+
+# 3. Convertir todas las columnas a numérico (manejar enteros excedidos)
+for (col_name in names(new_datos)) {
+  if (is.numeric(new_datos[[col_name]])) {
+    new_datos[[col_name]] <- as.numeric(new_datos[[col_name]])
+  }
+}
+
+# 4. Eliminar todas las filas que aun contienen NA o Inf
+new_datos <- new_datos[complete.cases(new_datos) & apply(new_datos, 1, function(row) all(is.finite(row))), ]
+
+# 5. Tendencia al Agrupamiento (Estadístico de Hopkins)
+hopkins_stat <- hopkins(new_datos, m = 100)
+print(paste("Estadístico de Hopkins:", hopkins_stat))
+nrow(new_datos)
+
+# 6. Método del Codo
+fviz_nbclust(new_datos[1:9000, ], stats::kmeans, method = "wss") +
+  labs(subtitle = "Método del Codo")
+
+```
+
+El estadístico de Hopkins es 1, esto nos indica que los datos están distribuidos uniformemente y no tienen una tendencia significativa a gruparse. De igual forma se realiza el método de codo para analizar cuantos grupos serian óptimos para hacer el clustering, obteniendo un total de dos grupos.
+
+```{r data clustering}
+
+k_optimo <- 2
+
+kmeans <- kmeans(new_datos, centers = k_optimo)
+
+silueta <- silhouette(kmeans$cluster, dist(new_datos))
+
+fviz_silhouette(silueta)
+
+```
+
+Un valor de 0.58 sugiere que la agrupación es moderadamente buena. Los objetos tienden a estar bien agrupados dentro de sus clústeres, pero hay cierta superposición o cercanía a las fronteras de los clústeres. Esto indica que los clústeres son razonablemente distintos, pero no perfectamente separados.
+
+
+```{r group analysis numeric}
+
+new_datos$grupo <- as.factor(kmeans$cluster)
+
+medias_numericas <- aggregate(new_datos[, c("AÑOREG", "AÑOOCU", "EDADHOM", "EDADMUJ")], 
+                               by = list(new_datos$grupo), FUN = mean)
+
+print(medias_numericas)
+
+```
+
+```{r group analysis categoric}
+
+new_datos$DEPREG <- dep_decod[as.character(new_datos$DEPREG)]
+new_datos$DEPOCU <- dep_decod[as.character(new_datos$DEPOCU)]
+new_datos$PUEHOM <- pue_decod[as.character(new_datos$PUEHOM)]
+new_datos$PUEMUJ <- pue_decod[as.character(new_datos$PUEMUJ)]
+new_datos$ESCHOM <- esc_decod[as.character(new_datos$ESCHOM)]
+new_datos$ESCMUJ <- esc_decod[as.character(new_datos$ESCMUJ)]
+new_datos$MUPREG <- mun_decod[as.character(new_datos$MUPREG)]
+new_datos$MUPOCU <- mun_decod[as.character(new_datos$MUPOCU)]
+new_datos$NACHOM <- nac_decod[as.character(new_datos$NACHOM)]
+new_datos$NACMUJ <- nac_decod[as.character(new_datos$NACMUJ)]
+new_datos$CIUOHOM <- ciuo_decod[as.character(new_datos$CIUOHOM)]
+new_datos$CIUOMUJ <- ciuo_decod[as.character(new_datos$CIUOMUJ)]
+
+new_datos$grupo <- as.factor(kmeans$cluster)
+
+frecuencias_categoricas <- function(x) {
+  if (is.factor(x)) {
+    return(table(x))
+  } else {
+    return(NA)
+  }
+}
+
+frecuencias_categoricas_grupo <- aggregate(new_datos[, sapply(new_datos, is.factor)], 
+                                           by = list(new_datos$grupo), FUN = frecuencias_categoricas)
+print("Frecuencias de Variables Categóricas por Grupo:")
+print(frecuencias_categoricas_grupo)
+
+
+```
 
 ### Relaciones entre las variables
 

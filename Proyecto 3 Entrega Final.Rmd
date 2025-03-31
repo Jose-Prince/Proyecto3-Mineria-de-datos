@@ -757,7 +757,7 @@ Se tienen las siguientes variables como categóricas:
 Las variables que se decodificaron fueron seleccionadas debido a que estas son relevantes para enteder los datos a simple vista. Las variables de nacionalidad, municipio y ocupacion no fueron decodificadas debido a la cantidad de datos en estas, los cuales, al decodificar, podrian causar complicaciones en la legibilidad y comprension de los datos.
 
 ```{r cat var exploration}
-datos_categoricos <- datos[, c("DEPREG", "MUPREG", "DEPOCU", "MUPOCU", "PUEHOM", "PUEMUJ", "NACHOM", "NACMUJ", "ESCHOM", "ESCMUJ", "CIUOHOM", "CIUOMUJ", "DIAOCU", "MESOCU")]
+datos_categoricos <- datos_decod[, c("DEPREG", "MUPREG", "DEPOCU", "MUPOCU", "PUEHOM", "PUEMUJ", "NACHOM", "NACMUJ", "ESCHOM", "ESCMUJ", "CIUOHOM", "CIUOMUJ", "DIAOCU", "MESOCU")]
 
 generar_tabla_frecuencia <- function(columna) {
   tabla <- table(columna)
@@ -1116,7 +1116,6 @@ new_datos <- new_datos[complete.cases(new_datos) & apply(new_datos, 1, function(
 # 5. Tendencia al Agrupamiento (Estadístico de Hopkins)
 hopkins_stat <- hopkins(new_datos, m = 100)
 print(paste("Estadístico de Hopkins:", hopkins_stat))
-nrow(new_datos)
 
 # 6. Método del Codo
 fviz_nbclust(new_datos[1:9000, ], stats::kmeans, method = "wss") +
@@ -1152,52 +1151,22 @@ print(medias_numericas)
 
 ```
 
-```{r group analysis categoric}
-
-new_datos$DEPREG <- dep_decod[as.character(new_datos$DEPREG)]
-new_datos$DEPOCU <- dep_decod[as.character(new_datos$DEPOCU)]
-new_datos$PUEHOM <- pue_decod[as.character(new_datos$PUEHOM)]
-new_datos$PUEMUJ <- pue_decod[as.character(new_datos$PUEMUJ)]
-new_datos$ESCHOM <- esc_decod[as.character(new_datos$ESCHOM)]
-new_datos$ESCMUJ <- esc_decod[as.character(new_datos$ESCMUJ)]
-new_datos$MUPREG <- mun_decod[as.character(new_datos$MUPREG)]
-new_datos$MUPOCU <- mun_decod[as.character(new_datos$MUPOCU)]
-new_datos$NACHOM <- nac_decod[as.character(new_datos$NACHOM)]
-new_datos$NACMUJ <- nac_decod[as.character(new_datos$NACMUJ)]
-new_datos$CIUOHOM <- ciuo_decod[as.character(new_datos$CIUOHOM)]
-new_datos$CIUOMUJ <- ciuo_decod[as.character(new_datos$CIUOMUJ)]
-
-new_datos$grupo <- as.factor(kmeans$cluster)
-
-frecuencias_categoricas <- function(x) {
-  if (is.factor(x)) {
-    return(table(x))
-  } else {
-    return(NA)
-  }
-}
-
-frecuencias_categoricas_grupo <- aggregate(new_datos[, sapply(new_datos, is.factor)], 
-                                           by = list(new_datos$grupo), FUN = frecuencias_categoricas)
-print("Frecuencias de Variables Categóricas por Grupo:")
-print(frecuencias_categoricas_grupo)
-
-
-```
+El primer grupo representa eventos que se registran rapidamente después de su ocurrencia, posiblemente indicando un proceso de registro más eficiente o eventos que requieren registro inmediato. EL segundo grupo representa eventos que tienen un retraso entre su ocurrencia y registro, lo opuesto al grupo 1. Las ligeras diferencias en las edades promedio podrían indicar diferentes características demográficas entre los grupos.
 
 ### Relaciones entre las variables
 
 ```{r var relation}
-numerical_data <- datos[sapply(datos, is.numeric)]
+numerical_data <- datos_decod[, c("AÑOOCU", "AÑOREG", "EDADHOM", "EDADMUJ")]
 
 corr_matrix <- cor(numerical_data, use = "complete.obs")
+
 corr_melted <- melt(corr_matrix)
 
-ggplot(corr_melted, aes(Var1, Var2, fill = value)) + 
-  geom_tile() + 
-  scale_fill_gradient2(low = "blue", high = "red", mid = "white", midpoint = 0, limit = c(-1, 1)) + 
-  theme_minimal() + 
-  labs(title = "Matriz de Correlación", x = "", y = "") + 
+ggplot(corr_melted, aes(Var1, Var2, fill = value)) +
+  geom_tile() +
+  scale_fill_gradient2(low = "blue", high = "red", mid = "white", midpoint = 0, limit = c(-1, 1)) +
+  theme_minimal() +
+  labs(title = "Matriz de Correlación", x = "", y = "") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 

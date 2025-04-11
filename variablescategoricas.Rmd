@@ -15,6 +15,32 @@ library(ggplot2)
 ```{r }
 datos <- read.csv("merged_output.csv")
 
+
+# Base columns
+base_cols <- c("DEPREG", "MUPREG", "MESREG", "AÑOREG", "DIAOCU", "MESOCU", "AÑOOCU", "DEPOCU", "MUPOCU")
+
+# Hombres-specific columns
+hom_cols <- c("EDADHOM", "PUEHOM")
+# Mujeres-specific columns
+muj_cols <- c("EDADMUJ", "PUEMUJ")
+
+# Final selected columns
+hom_selected <- c(base_cols, hom_cols)
+muj_selected <- c(base_cols, muj_cols)
+
+# Create df_hom and rename columns
+df_hom <- datos[, hom_selected]
+colnames(df_hom)[colnames(df_hom) == "EDADHOM"] <- "EDAD"
+colnames(df_hom)[colnames(df_hom) == "PUEHOM"] <- "PUE"
+
+# Create df_muj and rename columns
+df_muj <- datos[, muj_selected]
+colnames(df_muj)[colnames(df_muj) == "EDADMUJ"] <- "EDAD"
+colnames(df_muj)[colnames(df_muj) == "PUEMUJ"] <- "PUE"
+
+df_combined <- rbind(df_hom, df_muj)
+
+write.csv(df_combined, "datosjuntados.csv", row.names = FALSE)
 ```
 
 Se decodificaran las variables categoricas con el proposito de que el analisis sea mas claro.

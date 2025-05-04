@@ -10,11 +10,47 @@ output: html_document
 ## Enlace a Github
 [[https://github.com/Jose-Prince/Proyecto3-Mineria-de-datos]]
 
+
+
+## Preprocesamiento de datos
+```{r transformacion}
+datos <- read.csv("merged_output.csv")
+
+# Define base variables
+base_vars <- c("DEPREG", "MUPREG", "MESREG", "AÑOREG", "DIAOCU", "MESOCU", "AÑOOCU", "DEPOCU", "MUPOCU")
+
+# HOM-specific columns
+hom_vars <- c(base_vars, "EDADHOM", "PUEHOM", "NACHOM", "ESCHOM", "CIUOHOM")
+
+# MUJ-specific columns
+muj_vars <- c(base_vars, "EDADMUJ", "PUEMUJ", "NACMUJ", "ESCMUJ", "CIUOMUJ")
+
+# Create the two dataframes
+datos_hom <- datos[, hom_vars]
+datos_muj <- datos[, muj_vars]
+
+colnames(datos_hom) <- c(
+  base_vars,
+  "EDAD", "PUE", "NAC", "ESC", "CIUO"
+)
+
+# For datos_muj
+colnames(datos_muj) <- c(
+  base_vars,
+  "EDAD", "PUE", "NAC", "ESC", "CIUO"
+)
+
+datos_hom$SEXO <- "HOM"
+datos_muj$SEXO <- "MUJ"
+
+datos <- rbind(datos_hom, datos_muj)
+
+```
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
 
 
-datos <- read.csv("merged_output.csv")
 datos_decod <- datos 
 
 dep_decod <- c(
@@ -484,24 +520,85 @@ ciuo_decod <- c(
 
 datos_decod$DEPREG <- dep_decod[as.character(datos$DEPREG)]
 datos_decod$DEPOCU <- dep_decod[as.character(datos$DEPOCU)]
-datos_decod$PUEHOM <- pue_decod[as.character(datos$PUEHOM)]
-datos_decod$PUEMUJ <- pue_decod[as.character(datos$PUEMUJ)]
-datos_decod$ESCHOM <- esc_decod[as.character(datos$ESCHOM)]
-datos_decod$ESCMUJ <- esc_decod[as.character(datos$ESCMUJ)]
+datos_decod$PUE <- pue_decod[as.character(datos$PUE)]
+datos_decod$ESC <- esc_decod[as.character(datos$ESC)]
 datos_decod$MUPREG <- mun_decod[as.character(datos$MUPREG)]
 datos_decod$MUPOCU <- mun_decod[as.character(datos$MUPOCU)]
-datos_decod$NACHOM <- nac_decod[as.character(datos$NACHOM)]
-datos_decod$NACMUJ <- nac_decod[as.character(datos$NACMUJ)]
-datos_decod$CIUOHOM <- ciuo_decod[as.character(datos$CIUOHOM)]
-datos_decod$CIUOMUJ <- ciuo_decod[as.character(datos$CIUOMUJ)]
+datos_decod$NAC <- nac_decod[as.character(datos$NAC)]
+datos_decod$CIUO <- ciuo_decod[as.character(datos$CIUO)]
 
 ```
 
+
+```{r , echo=FALSE}
+
+datos <- datos_decod
+datos$AÑOOCU[is.na(datos$AÑOOCU)] <- datos$AÑOREG[is.na(datos$AÑOOCU)]
+
+datos[datos == 999] <- NA
+
+datos$EDAD <- zoo::na.locf(datos$EDAD, na.rm = FALSE)
+
+
+
+```
+
+
 ## Variable Respuesta
 
-De acuerdo con nuestros objetivos y la problemática, decidimos utilizar la variable cuantitativa edad tanto de la mujer como del hombre debido a que es un factor clave para entender los patrones y características del divorcio en Guatemala. La edad nos permite analizar en qué etapas de la vida ocurren con mayor frecuencia los divorcios, identificar posibles diferencias entre hombres y mujeres, y explorar si existe una relación entre la edad y la probabilidad de disolución del matrimonio. 
+De acuerdo con nuestros objetivos y la problemática, decidimos utilizar la variable cuantitativa edad tanto de la mujer como del hombre debido a que es un factor clave para entender los patrones y características del divorcio en Guatemala. La edad nos permite analizar en qué etapas de la vida ocurren con mayor frecuencia los divorcios, identificar posibles diferencias entre hombres y mujeres, y explorar si existe una relación entre la edad y la probabilidad de disolución del matrimonio. Por lo tanto, decidimos realizar transformaciones en los datos, unificando las edades de la mujer y del hombre en una sola variable denominada edad. Asimismo, se integró la etnia de ambos en una única variable, con el objetivo de evitar discrepancias al momento del análisis y facilitar la comparación entre ambos
+géneros.
 
-Por lo tanto, decidimos realizar transformaciones en los datos, unificando las edades de la mujer y del hombre en una sola variable denominada edad. 
+Por otro lado existen datos NA como el año de ocurrencia con las datos que tienen como registro en 2012 ya que no sabemos si ocurrieron en el año anterior o anteriores lo cual lo generalizamos como el año 2012. Por otro lado en nuestra variable respuesta tiene muchos valores NA lo cual no podemos aplicar llenado de datos con la mediana. Por lo tanto utilizamos un algoritmo forward filling para Completar valores faltantes de forma sencilla cuando se espera que los datos no cambien drásticamente de un punto a otro.
 
-## Preprocesamiento de datos
+
+```{r vistadataset, echo=FALSE}
+
+summary(datos)
+
+```
+```{r dimensiones, echo=FALSE}
+dim(datos)
+```
+Por lo tanto, tenemos un total de 15 variables a analizar; en estas tenemos la EDAD, NAC, ESC, CIUO, SEXO y
+PUE como las variables de Edad tanto hombre y mujer y Etnia para el hombre y mujer.
+Se observa que en la transformación existen 163652 filas de datos y 11 que son las
+variables.
+
+
+Para el conjunto de prueba y entrenamiento observamos que el data set esta ordenado por años, lo cual nuestro proposito es construir un modelo cuyo proposito es predecir en los futuros años. Por lo tanto se tomara para el conjunto de entrenamiento todos los datos que tienen un año de registro menor o igual que 2021. Para los datos de prueba se utilizaria año de registro mayores a 2021.
+
+```{r registros , echo=FALSE}
+
+entrenamiento <- datos[datos$AÑOREG >= 2012 & datos$AÑOREG <= 2021, ]
+prueba <- datos[datos$AÑOREG > 2021 & datos$AÑOREG <= 2024, ]
+
+head(entrenamiento)
+head(prueba)
+
+```
+```{r porcentaje, echo=FALSE}
+
+nrow(prueba)/nrow(entrenamiento)*100
+
+```
+Se observa que el porcentaje del conjunto de prueba es de 36.75% mientras que el porcentaje de entrenamiento es de 63.25
+
+
+
+
+```{r , echo=FALSE}
+
+boxplot(entrenamiento$EDAD, breaks = 50, main = "Distribución de la variable respuesta", xlab = "Categoría", col = "blue")
+
+```
+Se observa que en la caja de bigotes que los datos atípicos en el conjunto de entrenamientos son las personas mayores a 65 años. Estas podrían representar valores atípicos porque tiene una menor ocurrencia de estos valores en la muestra.
+
+
+```{r , echo=FALSE}
+
+boxplot(prueba$EDAD, breaks = 50, main = "Distribución de la variable respuesta", xlab = "Categoría", col = "blue")
+
+```
+Por otro lado observamos que acá los datos atipicos son identificados al tener 62 años o más. Estas podrían representar valores atípicos o simplemente una menor ocurrencia de estos valores en la muestra.
 

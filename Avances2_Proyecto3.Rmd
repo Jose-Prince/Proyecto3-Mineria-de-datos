@@ -14,6 +14,9 @@ output: html_document
 
 ## Preprocesamiento de datos
 ```{r transformacion}
+library(rpart)
+library(zoo)
+
 datos <- read.csv("merged_output.csv")
 
 # Define base variables
@@ -538,6 +541,34 @@ datos$AÑOOCU[is.na(datos$AÑOOCU)] <- datos$AÑOREG[is.na(datos$AÑOOCU)]
 datos[datos == 999] <- NA
 
 datos$EDAD <- zoo::na.locf(datos$EDAD, na.rm = FALSE)
+datos$EDAD <- zoo::na.locf(datos$EDAD, fromLast = TRUE, na.rm = FALSE)
+
+library(zoo)
+
+datos$DEPREG <- na.locf(datos$DEPREG, na.rm = FALSE)
+datos$DEPREG <- na.locf(datos$DEPREG, fromLast = TRUE, na.rm = FALSE)
+
+datos$DEPOCU <- na.locf(datos$DEPOCU, na.rm = FALSE)
+datos$DEPOCU <- na.locf(datos$DEPOCU, fromLast = TRUE, na.rm = FALSE)
+
+datos$PUE <- na.locf(datos$PUE, na.rm = FALSE)
+datos$PUE <- na.locf(datos$PUE, fromLast = TRUE, na.rm = FALSE)
+
+datos$ESC <- na.locf(datos$ESC, na.rm = FALSE)
+datos$ESC <- na.locf(datos$ESC, fromLast = TRUE, na.rm = FALSE)
+
+datos$MUPREG <- na.locf(datos$MUPREG, na.rm = FALSE)
+datos$MUPREG <- na.locf(datos$MUPREG, fromLast = TRUE, na.rm = FALSE)
+
+datos$MUPOCU <- na.locf(datos$MUPOCU, na.rm = FALSE)
+datos$MUPOCU <- na.locf(datos$MUPOCU, fromLast = TRUE, na.rm = FALSE)
+
+datos$NAC <- na.locf(datos$NAC, na.rm = FALSE)
+datos$NAC <- na.locf(datos$NAC, fromLast = TRUE, na.rm = FALSE)
+
+datos$CIUO <- na.locf(datos$CIUO, na.rm = FALSE)
+datos$CIUO <- na.locf(datos$CIUO, fromLast = TRUE, na.rm = FALSE)
+
 
 
 
@@ -549,7 +580,7 @@ datos$EDAD <- zoo::na.locf(datos$EDAD, na.rm = FALSE)
 De acuerdo con nuestros objetivos y la problemática, decidimos utilizar la variable cuantitativa edad tanto de la mujer como del hombre debido a que es un factor clave para entender los patrones y características del divorcio en Guatemala. La edad nos permite analizar en qué etapas de la vida ocurren con mayor frecuencia los divorcios, identificar posibles diferencias entre hombres y mujeres, y explorar si existe una relación entre la edad y la probabilidad de disolución del matrimonio. Por lo tanto, decidimos realizar transformaciones en los datos, unificando las edades de la mujer y del hombre en una sola variable denominada edad. Asimismo, se integró la etnia de ambos en una única variable, con el objetivo de evitar discrepancias al momento del análisis y facilitar la comparación entre ambos
 géneros.
 
-Por otro lado existen datos NA como el año de ocurrencia con las datos que tienen como registro en 2012 ya que no sabemos si ocurrieron en el año anterior o anteriores lo cual lo generalizamos como el año 2012. Por otro lado en nuestra variable respuesta tiene muchos valores NA lo cual no podemos aplicar llenado de datos con la mediana. Por lo tanto utilizamos un algoritmo forward filling para Completar valores faltantes de forma sencilla cuando se espera que los datos no cambien drásticamente de un punto a otro.
+Por otro lado existen datos NA como el año de ocurrencia con las datos que tienen como registro en 2012 ya que no sabemos si ocurrieron en el año anterior o anteriores lo cual lo generalizamos como el año 2012. Por otro lado en nuestra variable respuesta tiene muchos valores NA lo cual no podemos aplicar llenado de datos con la mediana. Por lo tanto utilizamos un algoritmo forward y backward filling para Completar valores faltantes de forma sencilla cuando se espera que los datos no cambien drásticamente de un punto a otro.
 
 
 ```{r vistadataset, echo=FALSE}
@@ -601,4 +632,3 @@ boxplot(prueba$EDAD, breaks = 50, main = "Distribución de la variable respuesta
 
 ```
 Por otro lado observamos que acá los datos atipicos son identificados al tener 62 años o más. Estas podrían representar valores atípicos o simplemente una menor ocurrencia de estos valores en la muestra.
-

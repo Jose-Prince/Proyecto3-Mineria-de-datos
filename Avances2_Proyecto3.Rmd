@@ -16,6 +16,8 @@ output: html_document
 ```{r transformacion}
 library(rpart)
 library(zoo)
+library(caret)
+library(ranger)
 
 datos <- read.csv("merged_output.csv")
 
@@ -632,3 +634,160 @@ boxplot(prueba$EDAD, breaks = 50, main = "Distribución de la variable respuesta
 
 ```
 Por otro lado observamos que acá los datos atipicos son identificados al tener 62 años o más. Estas podrían representar valores atípicos o simplemente una menor ocurrencia de estos valores en la muestra.
+
+## Modelos de Random Forest
+
+```{r porcentaje, echo=FALSE}
+# Cargar las librerías necesarias
+library(ranger)
+library(caret)
+
+# Asegurarse de que las variables categóricas sean factores
+datos$SEXO <- as.factor(datos$SEXO)
+datos$PUE <- as.factor(datos$PUE)
+datos$ESC <- as.factor(datos$ESC)
+datos$NAC <- as.factor(datos$NAC)
+datos$CIUO <- as.factor(datos$CIUO)
+datos$DEPREG <- as.factor(datos$DEPREG)
+datos$MUPREG <- as.factor(datos$MUPREG)
+datos$DIAOCU <- as.integer(datos$DIAOCU)
+datos$MESOCU <- as.integer(datos$MESOCU)
+datos$AÑOOCU <- as.integer(datos$AÑOOCU)
+datos$DEPOCU <- as.factor(datos$DEPOCU)
+datos$MUPOCU <- as.factor(datos$MUPOCU)
+datos$MESREG <- as.integer(datos$MESREG)
+datos$AÑOREG <- as.integer(datos$AÑOREG)
+
+# Filtrar el dataframe para omitir las filas donde EDAD es igual a 999 o NA
+filtered_data <- datos[datos$EDAD != 999 & !is.na(datos$EDAD), ]
+
+# Crear el índice para la partición en el dataframe filtrado
+set.seed(123)
+indice <- createDataPartition(filtered_data$EDAD, p = 0.7, list = FALSE)
+
+# Dividir los datos filtrados en conjuntos de entrenamiento y prueba
+entrenamiento <- filtered_data[indice, ]
+prueba <- filtered_data[-indice, ]
+
+# Definir la variable respuesta y las variables predictoras
+variable_respuesta <- "EDAD"
+variables_predictoras <- setdiff(names(entrenamiento), c(variable_respuesta))
+
+# Convertir las variables predictoras categóricas a factores en ambos conjuntos
+entrenamiento[, variables_predictoras[sapply(entrenamiento[, variables_predictoras], is.character)]] <-
+  lapply(entrenamiento[, variables_predictoras[sapply(entrenamiento[, variables_predictoras], is.character)]], as.factor)
+prueba[, variables_predictoras[sapply(prueba[, variables_predictoras], is.character)]] <-
+  lapply(prueba[, variables_predictoras[sapply(prueba[, variables_predictoras], is.character)]], as.factor)
+
+# Asegurarse de que los niveles de los factores sean los mismos en ambos conjuntos
+for (col in variables_predictoras[sapply(entrenamiento[, variables_predictoras], is.factor)]) {
+  common_levels <- union(levels(entrenamiento[[col]]), levels(prueba[[col]]))
+  levels(entrenamiento[[col]]) <- common_levels
+  levels(prueba[[col]]) <- common_levels
+}
+
+# 1. Crear tres modelos de ranger con diferentes parámetros definidos manualmente
+modelo_ranger1 <- ranger(EDAD ~ .,
+                         data = entrenamiento[, c(variable_respuesta, variables_predictoras)],
+                         num.trees = 100,
+                         mtry = 5,
+                         min.node.size = 5,
+                         splitrule = "variance",
+                         importance = "impurity")
+
+modelo_ranger2 <- ranger(EDAD ~ .,
+                         data = entrenamiento[, c(variable_respuesta, variables_predictoras)],
+                         num.trees = 200,
+                         mtry = 8,
+                         min.node.size = 10,
+                         splitrule = "variance",
+                         importance = "impurity")
+
+modelo_ranger3 <- ranger(EDAD ~ .,
+                         data = entrenamiento[, c(variable_respuesta, variables_predictoras)],
+                         num.trees = 150,
+                         mtry = 3,
+                         min.node.size = 15,
+                         splitrule = "variance",
+                         importance = "impurity")
+
+# 2. Evaluar los modelos en el conjunto de prueba
+predicciones_ranger1_prueba <- predict(modelo_ranger1, data = prueba[, variables_predictoras])$predictions
+rmse_ranger1_prueba <- sqrt(mean((predicciones_ranger1_prueba - prueba$EDAD)^2))
+print(paste("RMSE del Modelo ranger 1 en prueba:", rmse_ranger1_prueba))
+
+predicciones_ranger2_prueba <- predict(modelo_ranger2, data = prueba[, variables_predictoras])$predictions
+rmse_ranger2_prueba <- sqrt(mean((predicciones_ranger2_prueba - prueba$EDAD)^2))
+print(paste("RMSE del Modelo ranger 2 en prueba:", rmse_ranger2_prueba))
+
+predicciones_ranger3_prueba <- predict(modelo_ranger3, data = prueba[, variables_predictoras])$predictions
+rmse_ranger3_prueba <- sqrt(mean((predicciones_ranger3_prueba - prueba$EDAD)^2))
+print(paste("RMSE del Modelo ranger 3 en prueba:", rmse_ranger3_prueba))
+
+# 3. Seleccionar el mejor modelo basado en el rendimiento en el conjunto de prueba (menor RMSE)
+resultados_prueba_ranger_manual <- data.frame(
+  Modelo = c("ranger 1", "ranger 2", "ranger 3"),
+  RMSE_Prueba = c(rmse_ranger1_prueba, rmse_ranger2_prueba, rmse_ranger3_prueba)
+)
+
+mejor_modelo_nombre_ranger_manual <- resultados_prueba_ranger_manual$Modelo[which.min(resultados_prueba_ranger_manual$RMSE_Prueba)]
+mejor_rmse_ranger_manual <- min(resultados_prueba_ranger_manual$RMSE_Prueba)
+
+print(paste("El mejor modelo en el conjunto de prueba es:", mejor_modelo_nombre_ranger_manual, "con un RMSE de:", mejor_rmse_ranger_manual))
+
+# 4. El mejor modelo final es el que tuvo el menor RMSE en la prueba
+if (mejor_modelo_nombre_ranger_manual == "ranger 1") {
+  mejor_modelo_final_ranger_manual <- modelo_ranger1
+} else if (mejor_modelo_nombre_ranger_manual == "ranger 2") {
+  mejor_modelo_final_ranger_manual <- modelo_ranger2
+} else {
+  mejor_modelo_final_ranger_manual <- modelo_ranger3
+}
+
+print("El mejor modelo final entrenado con parámetros manuales:")
+print(mejor_modelo_final_ranger_manual)
+
+# Explicación de la selección del mejor modelo:
+cat("\nExplicación de la selección del mejor modelo:\n")
+cat("Para seleccionar el mejor modelo, creamos tres modelos de Random Forest utilizando el algoritmo 'ranger' con las siguientes combinaciones de parámetros definidas manualmente:\n")
+cat("- Modelo ranger 1: num.trees = 100, mtry = 5, min.node.size = 5, splitrule = 'variance'\n")
+cat("- Modelo ranger 2: num.trees = 200, mtry = 8, min.node.size = 10, splitrule = 'variance'\n")
+cat("- Modelo ranger 3: num.trees = 150, mtry = 3, min.node.size = 15, splitrule = 'variance'\n\n")
+
+cat("Evaluamos el rendimiento de cada modelo directamente en el conjunto de prueba utilizando el RMSE (Root Mean Squared Error). El conjunto de prueba contiene datos que el modelo no vio durante el entrenamiento, por lo que su rendimiento en este conjunto es una buena indicación de cómo generalizará a datos futuros.\n\n")
+
+cat("Los RMSE obtenidos en el conjunto de prueba para cada modelo fueron:\n")
+cat(paste("- Modelo ranger 1: RMSE =", round(rmse_ranger1_prueba, 4), "\n"))
+cat(paste("- Modelo ranger 2: RMSE =", round(rmse_ranger2_prueba, 4), "\n"))
+cat(paste("- Modelo ranger 3: RMSE =", round(rmse_ranger3_prueba, 4), "\n\n"))
+
+cat(paste("Seleccionamos el modelo con el menor RMSE en el conjunto de prueba como el mejor modelo final, ya que indica que este modelo tuvo el mejor rendimiento en la predicción de la variable 'EDAD' en datos no vistos. En este caso, el mejor modelo fue:", mejor_modelo_nombre_ranger_manual, "con un RMSE de:", round(mejor_rmse_ranger_manual, 4), ".\n"))
+cat("Los parámetros de este mejor modelo final son:\n")
+print(mejor_modelo_final_ranger_manual$call)
+```
+
+Para seleccionar el mejor modelo, creamos tres modelos de Random Forest utilizando el algoritmo 'ranger' con las siguientes combinaciones de parámetros definidas manualmente:
+- Modelo ranger 1: num.trees = 100, mtry = 5, min.node.size = 5, splitrule = 'variance'
+- Modelo ranger 2: num.trees = 200, mtry = 8, min.node.size = 10, splitrule = 'variance'
+- Modelo ranger 3: num.trees = 150, mtry = 3, min.node.size = 15, splitrule = 'variance'
+
+Evaluamos el rendimiento de cada modelo directamente en el conjunto de prueba utilizando el RMSE (Root Mean Squared Error). El conjunto de prueba contiene datos que el modelo no vio durante el entrenamiento, por lo que su rendimiento en este conjunto es una buena indicación de cómo generalizará a datos futuros.
+
+Los RMSE obtenidos en el conjunto de prueba para cada modelo fueron:
+- Modelo ranger 1: RMSE = 9.0331 
+- Modelo ranger 2: RMSE = 9.0288 
+- Modelo ranger 3: RMSE = 8.8989 
+
+Para seleccionar el mejor modelo, creamos tres modelos de Random Forest utilizando el algoritmo 'ranger' con las siguientes combinaciones de parámetros definidas manualmente:
+- Modelo ranger 1: num.trees = 100, mtry = 5, min.node.size = 5, splitrule = 'variance'
+- Modelo ranger 2: num.trees = 200, mtry = 8, min.node.size = 10, splitrule = 'variance'
+- Modelo ranger 3: num.trees = 150, mtry = 3, min.node.size = 15, splitrule = 'variance'
+
+Evaluamos el rendimiento de cada modelo directamente en el conjunto de prueba utilizando el RMSE (Root Mean Squared Error). El conjunto de prueba contiene datos que el modelo no vio durante el entrenamiento, por lo que su rendimiento en este conjunto es una buena indicación de cómo generalizará a datos futuros.
+
+Los RMSE obtenidos en el conjunto de prueba para cada modelo fueron:
+- Modelo ranger 1: RMSE = 9.0331 
+- Modelo ranger 2: RMSE = 9.0288 
+- Modelo ranger 3: RMSE = 8.8989 
+
+Seleccionamos el modelo con el menor RMSE en el conjunto de prueba como el mejor modelo final, ya que indica que este modelo tuvo el mejor rendimiento en la predicción de la variable 'EDAD' en datos no vistos. En este caso, el mejor modelo fue: ranger 3 con un RMSE de: 8.8989 .

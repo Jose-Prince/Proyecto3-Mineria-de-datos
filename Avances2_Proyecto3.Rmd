@@ -637,7 +637,9 @@ Por otro lado observamos que acá los datos atipicos son identificados al tener 
 
 ## Modelos de Random Forest
 
-```{r porcentaje, echo=FALSE}
+Para el analisis se utilizara el algoritmo de random forest, debido a su buena capacidad para predecir utilizando varias variables descriptivas. Para el uso correcto de este algoritmo, se deben guardar las variables categoricas como factores, limpiar las columnas con NA y dividir el conjunto de datos. Al realizar todo el preprocesamiento indicado, nos aseguramos de que los modelos funcionan para analizar nuestro conjunto de datos.
+
+```{r analisis, echo=FALSE}
 # Cargar las librerías necesarias
 library(ranger)
 library(caret)
@@ -789,5 +791,6 @@ Los RMSE obtenidos en el conjunto de prueba para cada modelo fueron:
 - Modelo ranger 1: RMSE = 9.0331 
 - Modelo ranger 2: RMSE = 9.0288 
 - Modelo ranger 3: RMSE = 8.8989 
+
 
 Seleccionamos el modelo con el menor RMSE en el conjunto de prueba como el mejor modelo final, ya que indica que este modelo tuvo el mejor rendimiento en la predicción de la variable 'EDAD' en datos no vistos. En este caso, el mejor modelo fue: ranger 3 con un RMSE de: 8.8989 .

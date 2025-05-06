@@ -365,7 +365,19 @@ display: none;
 </div>
 <div id="preprocesamiento-de-datos" class="section level2">
 <h2>Preprocesamiento de datos</h2>
-<pre class="r"><code>datos &lt;- read.csv(&quot;merged_output.csv&quot;)
+<pre class="r"><code>library(rpart)
+library(zoo)</code></pre>
+<pre><code>## 
+## Adjuntando el paquete: &#39;zoo&#39;</code></pre>
+<pre><code>## The following objects are masked from &#39;package:base&#39;:
+## 
+##     as.Date, as.Date.numeric</code></pre>
+<pre class="r"><code>library(caret)</code></pre>
+<pre><code>## Cargando paquete requerido: ggplot2</code></pre>
+<pre><code>## Cargando paquete requerido: lattice</code></pre>
+<pre class="r"><code>library(ranger)
+
+datos &lt;- read.csv(&quot;merged_output.csv&quot;)
 
 # Define base variables
 base_vars &lt;- c(&quot;DEPREG&quot;, &quot;MUPREG&quot;, &quot;MESREG&quot;, &quot;AÑOREG&quot;, &quot;DIAOCU&quot;, &quot;MESOCU&quot;, &quot;AÑOOCU&quot;, &quot;DEPOCU&quot;, &quot;MUPOCU&quot;)
@@ -415,9 +427,9 @@ datos que tienen como registro en 2012 ya que no sabemos si ocurrieron
 en el año anterior o anteriores lo cual lo generalizamos como el año
 2012. Por otro lado en nuestra variable respuesta tiene muchos valores
 NA lo cual no podemos aplicar llenado de datos con la mediana. Por lo
-tanto utilizamos un algoritmo forward filling para Completar valores
-faltantes de forma sencilla cuando se espera que los datos no cambien
-drásticamente de un punto a otro.</p>
+tanto utilizamos un algoritmo forward y backward filling para Completar
+valores faltantes de forma sencilla cuando se espera que los datos no
+cambien drásticamente de un punto a otro.</p>
 <pre><code>##     DEPREG             MUPREG              MESREG           AÑOREG    
 ##  Length:163652      Length:163652      Min.   : 1.000   Min.   :2012  
 ##  Class :character   Class :character   1st Qu.: 4.000   1st Qu.:2015  
@@ -425,7 +437,6 @@ drásticamente de un punto a otro.</p>
 ##                                        Mean   : 6.546   Mean   :2018  
 ##                                        3rd Qu.:10.000   3rd Qu.:2022  
 ##                                        Max.   :12.000   Max.   :2024  
-##                                                                       
 ##      DIAOCU          MESOCU           AÑOOCU        DEPOCU         
 ##  Min.   : 1.00   Min.   : 1.000   Min.   :2012   Length:163652     
 ##  1st Qu.: 8.00   1st Qu.: 3.000   1st Qu.:2015   Class :character  
@@ -433,7 +444,6 @@ drásticamente de un punto a otro.</p>
 ##  Mean   :15.78   Mean   : 6.305   Mean   :2018                     
 ##  3rd Qu.:23.00   3rd Qu.: 9.000   3rd Qu.:2021                     
 ##  Max.   :31.00   Max.   :12.000   Max.   :2023                     
-##                                                                    
 ##     MUPOCU               EDAD           PUE                NAC           
 ##  Length:163652      Min.   :15.00   Length:163652      Length:163652     
 ##  Class :character   1st Qu.:29.00   Class :character   Class :character  
@@ -441,12 +451,10 @@ drásticamente de un punto a otro.</p>
 ##                     Mean   :37.82                                        
 ##                     3rd Qu.:44.00                                        
 ##                     Max.   :98.00                                        
-##                     NA&#39;s   :2                                            
 ##      ESC                CIUO               SEXO          
 ##  Length:163652      Length:163652      Length:163652     
 ##  Class :character   Class :character   Class :character  
 ##  Mode  :character   Mode  :character   Mode  :character  
-##                                                          
 ##                                                          
 ##                                                          
 ## </code></pre>
@@ -470,8 +478,8 @@ año de registro mayores a 2021.</p>
 ## 5   Jutiapa Agua Blanca      2   2015      3      2   2015       Jutiapa
 ## 6 Guatemala   Guatemala      6   2016     14     10   2015       Jutiapa
 ##          MUPOCU EDAD              PUE            NAC     ESC     CIUO SEXO
-## 1 Huehuetenango   NA         Ignorado      Guatemala Ninguno Ignorado  HOM
-## 2     Guatemala   NA         Ignorado Estados Unidos Ninguno Ignorado  HOM
+## 1 Huehuetenango   46         Ignorado      Guatemala Ninguno Ignorado  HOM
+## 2     Guatemala   46         Ignorado Estados Unidos Ninguno Ignorado  HOM
 ## 3        Zacapa   46 Mestizo / Ladino      Guatemala Ninguno Ignorado  HOM
 ## 4   Villa Nueva   46         Ignorado      Guatemala Ninguno Ignorado  HOM
 ## 5  Yupiltepeque   46 Mestizo / Ladino      Guatemala Ninguno Ignorado  HOM
@@ -490,13 +498,13 @@ año de registro mayores a 2021.</p>
 ## 46356    Guatemala             Chinautla   58 Mestizo / Ladino Guatemala
 ## 46372    Guatemala             Guatemala   51 Mestizo / Ladino Guatemala
 ## 46375    Guatemala             Guatemala   43 Mestizo / Ladino Guatemala
-##                 ESC CIUO SEXO
-## 46342 Universitario &lt;NA&gt;  HOM
-## 46344 Universitario &lt;NA&gt;  HOM
-## 46351      Primaria &lt;NA&gt;  HOM
-## 46356 Universitario &lt;NA&gt;  HOM
-## 46372 Universitario &lt;NA&gt;  HOM
-## 46375 Universitario &lt;NA&gt;  HOM</code></pre>
+##                 ESC     CIUO SEXO
+## 46342 Universitario Ignorado  HOM
+## 46344 Universitario Ignorado  HOM
+## 46351      Primaria Ignorado  HOM
+## 46356 Universitario Ignorado  HOM
+## 46372 Universitario Ignorado  HOM
+## 46375 Universitario Ignorado  HOM</code></pre>
 <pre><code>## [1] 36.75274</code></pre>
 <p>Se observa que el porcentaje del conjunto de prueba es de 36.75%
 mientras que el porcentaje de entrenamiento es de 63.25</p>
@@ -509,6 +517,86 @@ de estos valores en la muestra.</p>
 Por otro lado observamos que acá los datos atipicos son identificados al
 tener 62 años o más. Estas podrían representar valores atípicos o
 simplemente una menor ocurrencia de estos valores en la muestra.</p>
+</div>
+<div id="modelos-de-random-forest" class="section level2">
+<h2>Modelos de Random Forest</h2>
+<p>Para el analisis se utilizara el algoritmo de random forest, debido a
+su buena capacidad para predecir utilizando varias variables
+descriptivas. Para el uso correcto de este algoritmo, se deben guardar
+las variables categoricas como factores, limpiar las columnas con NA y
+dividir el conjunto de datos. Al realizar todo el preprocesamiento
+indicado, nos aseguramos de que los modelos funcionan para analizar
+nuestro conjunto de datos.</p>
+<pre><code>## [1] &quot;RMSE del Modelo ranger 1 en prueba: 9.85143660647537&quot;</code></pre>
+<pre><code>## [1] &quot;RMSE del Modelo ranger 2 en prueba: 9.82141467359911&quot;</code></pre>
+<pre><code>## [1] &quot;RMSE del Modelo ranger 3 en prueba: 9.80603416394606&quot;</code></pre>
+<pre><code>## [1] &quot;El mejor modelo en el conjunto de prueba es: ranger 3 con un RMSE de: 9.80603416394606&quot;</code></pre>
+<pre><code>## [1] &quot;El mejor modelo final entrenado con parámetros manuales:&quot;</code></pre>
+<pre><code>## Ranger result
+## 
+## Call:
+##  ranger(EDAD ~ ., data = entrenamiento[, c(variable_respuesta,      variables_predictoras)], num.trees = 150, mtry = 3, min.node.size = 15,      splitrule = &quot;variance&quot;, importance = &quot;impurity&quot;) 
+## 
+## Type:                             Regression 
+## Number of trees:                  150 
+## Sample size:                      114558 
+## Number of independent variables:  14 
+## Mtry:                             3 
+## Target node size:                 15 
+## Variable importance mode:         impurity 
+## Splitrule:                        variance 
+## OOB prediction error (MSE):       97.19678 
+## R squared (OOB):                  0.3865799</code></pre>
+<pre><code>## 
+## Explicación de la selección del mejor modelo:</code></pre>
+<pre><code>## Para seleccionar el mejor modelo, creamos tres modelos de Random Forest utilizando el algoritmo &#39;ranger&#39; con las siguientes combinaciones de parámetros definidas manualmente:</code></pre>
+<pre><code>## - Modelo ranger 1: num.trees = 100, mtry = 5, min.node.size = 5, splitrule = &#39;variance&#39;</code></pre>
+<pre><code>## - Modelo ranger 2: num.trees = 200, mtry = 8, min.node.size = 10, splitrule = &#39;variance&#39;</code></pre>
+<pre><code>## - Modelo ranger 3: num.trees = 150, mtry = 3, min.node.size = 15, splitrule = &#39;variance&#39;</code></pre>
+<pre><code>## Evaluamos el rendimiento de cada modelo directamente en el conjunto de prueba utilizando el RMSE (Root Mean Squared Error). El conjunto de prueba contiene datos que el modelo no vio durante el entrenamiento, por lo que su rendimiento en este conjunto es una buena indicación de cómo generalizará a datos futuros.</code></pre>
+<pre><code>## Los RMSE obtenidos en el conjunto de prueba para cada modelo fueron:</code></pre>
+<pre><code>## - Modelo ranger 1: RMSE = 9.8514</code></pre>
+<pre><code>## - Modelo ranger 2: RMSE = 9.8214</code></pre>
+<pre><code>## - Modelo ranger 3: RMSE = 9.806</code></pre>
+<pre><code>## Seleccionamos el modelo con el menor RMSE en el conjunto de prueba como el mejor modelo final, ya que indica que este modelo tuvo el mejor rendimiento en la predicción de la variable &#39;EDAD&#39; en datos no vistos. En este caso, el mejor modelo fue: ranger 3 con un RMSE de: 9.806 .</code></pre>
+<pre><code>## Los parámetros de este mejor modelo final son:</code></pre>
+<pre><code>## ranger(EDAD ~ ., data = entrenamiento[, c(variable_respuesta, 
+##     variables_predictoras)], num.trees = 150, mtry = 3, min.node.size = 15, 
+##     splitrule = &quot;variance&quot;, importance = &quot;impurity&quot;)</code></pre>
+<p>Para seleccionar el mejor modelo, creamos tres modelos de Random
+Forest utilizando el algoritmo ‘ranger’ con las siguientes combinaciones
+de parámetros definidas manualmente: - Modelo ranger 1: num.trees = 100,
+mtry = 5, min.node.size = 5, splitrule = ‘variance’ - Modelo ranger 2:
+num.trees = 200, mtry = 8, min.node.size = 10, splitrule = ‘variance’ -
+Modelo ranger 3: num.trees = 150, mtry = 3, min.node.size = 15,
+splitrule = ‘variance’</p>
+<p>Evaluamos el rendimiento de cada modelo directamente en el conjunto
+de prueba utilizando el RMSE (Root Mean Squared Error). El conjunto de
+prueba contiene datos que el modelo no vio durante el entrenamiento, por
+lo que su rendimiento en este conjunto es una buena indicación de cómo
+generalizará a datos futuros.</p>
+<p>Los RMSE obtenidos en el conjunto de prueba para cada modelo fueron:
+- Modelo ranger 1: RMSE = 9.0331 - Modelo ranger 2: RMSE = 9.0288 -
+Modelo ranger 3: RMSE = 8.8989</p>
+<p>Para seleccionar el mejor modelo, creamos tres modelos de Random
+Forest utilizando el algoritmo ‘ranger’ con las siguientes combinaciones
+de parámetros definidas manualmente: - Modelo ranger 1: num.trees = 100,
+mtry = 5, min.node.size = 5, splitrule = ‘variance’ - Modelo ranger 2:
+num.trees = 200, mtry = 8, min.node.size = 10, splitrule = ‘variance’ -
+Modelo ranger 3: num.trees = 150, mtry = 3, min.node.size = 15,
+splitrule = ‘variance’</p>
+<p>Evaluamos el rendimiento de cada modelo directamente en el conjunto
+de prueba utilizando el RMSE (Root Mean Squared Error). El conjunto de
+prueba contiene datos que el modelo no vio durante el entrenamiento, por
+lo que su rendimiento en este conjunto es una buena indicación de cómo
+generalizará a datos futuros.</p>
+<p>Los RMSE obtenidos en el conjunto de prueba para cada modelo fueron:
+- Modelo ranger 1: RMSE = 9.0331 - Modelo ranger 2: RMSE = 9.0288 -
+Modelo ranger 3: RMSE = 8.8989</p>
+<p>Seleccionamos el modelo con el menor RMSE en el conjunto de prueba
+como el mejor modelo final, ya que indica que este modelo tuvo el mejor
+rendimiento en la predicción de la variable ‘EDAD’ en datos no vistos.
+En este caso, el mejor modelo fue: ranger 3 con un RMSE de: 8.8989 .</p>
 </div>
 </div>
 

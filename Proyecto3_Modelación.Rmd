@@ -8,7 +8,13 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
 
+library(caret)
+library(mlr)
+library(ggplot2)
+library(profvis)
 library(dplyr)
+library(rpart.plot)
+library(randomForest)
 
 datos <- read.csv("merged_output.csv")
 
@@ -28,6 +34,7 @@ filtered_data$ESCDIFFERENCE <- case_when(
 )
 
 
+
 ```
 
 ## Modelado de datos
@@ -44,6 +51,9 @@ train_indices <- sample(1:n, size = 0.7 * n)
 
 train_data <- filtered_data[train_indices, ]
 test_data <- filtered_data[-train_indices, ]
+
+train_data$AÑOOCU[is.na(train_data$AÑOOCU)] <- 2012
+test_data$AÑOOCU[is.na(test_data$AÑOOCU)] <- 2012
 ```
 
 El dataset se dividio en 70 - 30, 70% de los datos son usados para el entrenamiento de los modelos mientras que el 30% restante se usa para probar el dataset. 
@@ -59,7 +69,156 @@ cat("\n\nDistribución en prueba:\n")
 print(prop.table(table(test_data$ESCDIFFERENCE)) * 100)
 
 ```
+```{r modelo_rglinea_cv, warning=FALSE}
 
-Podemos ver en la distribución tanto de entrenamiento como de prueba que la variable respuesta no se encuentra balanceada, esto puede llegar a hacer que se adificil predecir la categorias de **Diferencia moderada** y **Mucha diferencia** al ser las clases con menor aparición a lo largo de los datos.
+cv <- trainControl(method="cv", 
+                          number=1)
+modelo_todas_cv_def <- caret::train(ESCDIFFERENCE~., data=train_data,method="multinom", trainControl=cv)
+
+```
+
+```{r prediccion_modelo_todas}
+pred <- predict(modelo_todas_cv_def,newdata = test_data[,-18])
+head(pred)
+caret::confusionMatrix(as.factor(pred),as.factor(test_data$ESCDIFFERENCE))
+```
+
+```{r modelo_rglinea_cv, warning=FALSE}
 
 
+cv <- trainControl(method="cv", 
+                          number=10)
+modelo_todas_cv_notrain <- caret::train(ESCDIFFERENCE~., data=train_data,method="multinom", trControl = cv)
+
+```
+
+```{r prediccion_modelo_todas}
+pred <- predict(modelo_todas_cv_notrain,newdata = test_data[,-18])
+head(pred)
+caret::confusionMatrix(as.factor(pred),as.factor(test_data$ESCDIFFERENCE))
+```
+
+
+
+
+```{r modelo_rglinea_cv, warning=FALSE}
+
+
+cv <- trainControl(method = "cv", number = 4)
+tune_grid <- expand.grid(decay = c(0, 0.001, 0.01, 0.1, 1))
+
+modelo_todas_cv_tune <- caret::train(
+  ESCDIFFERENCE ~ .,
+  data = train_data,
+  method = "multinom",
+  trControl = cv,
+  tuneGrid = tune_grid
+)
+
+```
+
+```{r prediccion_modelo_todas}
+pred <- predict(modelo_todas_cv,newdata = test_data[,-18])
+head(pred)
+caret::confusionMatrix(as.factor(pred),as.factor(test_data$ESCDIFFERENCE))
+```
+```{r prediccion_modelo_todas}
+modeloRF1<-randomForest(ESCDIFFERENCE~.,data=train_data)
+prediccionRF1<-predict(modeloRF1,newdata = test_data[,-18])
+confusionMatrix(as.factor(prediccionRF1), as.factor(test_data$ESCDIFFERENCE))
+```
+
+
+```{r prediccion_modelo_todas}
+mtry_vals <- 1:(ncol(train_data) - 1)
+train_data$ESCDIFFERENCE <- as.factor(train_data$ESCDIFFERENCE)
+test_data$ESCDIFFERENCE <- as.factor(test_data$ESCDIFFERENCE)
+modeloRF1<-randomForest(ESCDIFFERENCE~.,data=train_data,  ntree = 500)
+prediccionRF1<-predict(modeloRF1,newdata = test_data[,-18])
+confusionMatrix(as.factor(prediccionRF1), as.factor(test_data$ESCDIFFERENCE))
+```
+
+
+```{r prediccion_modelo_todas}
+mtry_vals <- 1:(ncol(train_data) - 1)
+train_data$ESCDIFFERENCE <- as.factor(train_data$ESCDIFFERENCE)
+test_data$ESCDIFFERENCE <- as.factor(test_data$ESCDIFFERENCE)
+modeloRF1<-randomForest(ESCDIFFERENCE~.,data=train_data,  ntree = 500, mtry=7)
+prediccionRF2<-predict(modeloRF1,newdata = test_data[,-18])
+confusionMatrix(as.factor(prediccionRF2), as.factor(test_data$ESCDIFFERENCE))
+```
+
+
+```{r arbolito}
+
+# Make sure the target is a factor
+train_data$ESCDIFFERENCE <- as.factor(train_data$ESCDIFFERENCE)
+
+# Train decision tree
+modelo_tree <- rpart(ESCDIFFERENCE ~ ., data = train_data, method = "class")
+
+# Plot the tree
+rpart.plot(modelo_tree, type = 3, extra = 101, fallen.leaves = TRUE)
+
+
+pred_tree <- predict(modelo_tree, newdata = test_data, type = "class")
+
+# Evaluate
+confusionMatrix(as.factor(pred_tree), as.factor(test_data$ESCDIFFERENCE))
+
+
+```
+
+
+```{r arbolito}
+
+cv_ctrl <- trainControl(method = "cv", number = 10)
+
+# Define grid of cp values to try
+cp_grid <- expand.grid(cp = seq(0.001, 0.05, by = 0.005))
+
+# Train decision tree with tuning
+modelo_tree_tuned <- caret::train(
+  ESCDIFFERENCE ~ .,
+  data = train_data,
+  method = "rpart",
+  trControl = cv_ctrl,
+  tuneGrid = cp_grid
+)
+
+modelo_tree_tuned$bestTune
+
+# Evaluate
+confusionMatrix(as.factor(pred_tree), as.factor(test_data$ESCDIFFERENCE))
+# Predict on test set
+pred_tree <- predict(modelo_tree_tuned, newdata = test_data)
+
+# Evaluate
+confusionMatrix(as.factor(pred_tree), as.factor(test_data$ESCDIFFERENCE))
+
+rpart.plot(modelo_tree_tuned$finalModel, type = 3, extra = 101, fallen.leaves = TRUE)
+
+```
+
+
+```{r arbolito}
+
+# Train decision tree with custom control parameters
+modelo_custom <- rpart(
+  ESCDIFFERENCE ~ ., 
+  data = train_data,
+  method = "class",
+  control = rpart.control(minsplit = 10, maxdepth = 4, cp = 0.01)
+)
+
+# Plot the tree
+rpart.plot(modelo_custom, type = 3, extra = 101, fallen.leaves = TRUE)
+
+# Predict on test set - GET CLASS LABELS
+pred_tree <- predict(modelo_custom, newdata = test_data, type = "class")
+
+# Evaluate performance
+confusionMatrix(as.factor(pred_tree), as.factor(test_data$ESCDIFFERENCE))
+
+
+```

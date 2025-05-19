@@ -5,7 +5,7 @@ date: "`r Sys.Date()`"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
+```{r setup_1, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
 
 library(caret)
@@ -43,7 +43,7 @@ Para el análisis del dataset de divorcios se tiene planeado usar como variable 
 
 Para la predicción de la variable respuesta se omitieron los valores NA's presentes en las variables EDADHOM, EDADMUJ, ESCHOM Y ESCMUJ debido a que cambian su valor podia afectar a la predicción de la variable respuesta y es por eso que la dedcisión que se tomo fue removerlas del dataset. De igual forma una variable que se removio debido a su baja correlación la varible respuesta fue CIUOHOM y CIUOMUJ, estas variabes presentaban la ocupación laboral pero se prefirio eliminarla porque en la mayoria de casos la ocupación era desconocida haciendo que no presentara información relevante para los modelos que se realizarán más adelante.
 
-```{r split data}
+```{r split data_1}
 
 set.seed(123)
 n <- nrow(filtered_data)
@@ -58,7 +58,7 @@ test_data$AÑOOCU[is.na(test_data$AÑOOCU)] <- 2012
 
 El dataset se dividio en 70 - 30, 70% de los datos son usados para el entrenamiento de los modelos mientras que el 30% restante se usa para probar el dataset. 
 
-```{r balance}
+```{r balance_1}
 
 # Distribución absoluta y relativa en el conjunto de entrenamiento
 cat("Distribución en entrenamiento:\n")
@@ -69,7 +69,7 @@ cat("\n\nDistribución en prueba:\n")
 print(prop.table(table(test_data$ESCDIFFERENCE)) * 100)
 
 ```
-```{r modelo_rglinea_cv, warning=FALSE}
+```{r modelo_rglinea_cv_1, warning=FALSE}
 
 cv <- trainControl(method="cv", 
                           number=1)
@@ -77,13 +77,13 @@ modelo_todas_cv_def <- caret::train(ESCDIFFERENCE~., data=train_data,method="mul
 
 ```
 
-```{r prediccion_modelo_todas}
+```{r prediccion_modelo_todas_1}
 pred <- predict(modelo_todas_cv_def,newdata = test_data[,-18])
 head(pred)
 caret::confusionMatrix(as.factor(pred),as.factor(test_data$ESCDIFFERENCE))
 ```
 
-```{r modelo_rglinea_cv, warning=FALSE}
+```{r modelo_rglinea_cv_2, warning=FALSE}
 
 
 cv <- trainControl(method="cv", 
@@ -92,7 +92,7 @@ modelo_todas_cv_notrain <- caret::train(ESCDIFFERENCE~., data=train_data,method=
 
 ```
 
-```{r prediccion_modelo_todas}
+```{r prediccion_modelo_todas_2}
 pred <- predict(modelo_todas_cv_notrain,newdata = test_data[,-18])
 head(pred)
 caret::confusionMatrix(as.factor(pred),as.factor(test_data$ESCDIFFERENCE))
@@ -101,7 +101,7 @@ caret::confusionMatrix(as.factor(pred),as.factor(test_data$ESCDIFFERENCE))
 
 
 
-```{r modelo_rglinea_cv, warning=FALSE}
+```{r modelo_rglinea_cv_3, warning=FALSE}
 
 
 cv <- trainControl(method = "cv", number = 4)
@@ -117,19 +117,20 @@ modelo_todas_cv_tune <- caret::train(
 
 ```
 
-```{r prediccion_modelo_todas}
-pred <- predict(modelo_todas_cv,newdata = test_data[,-18])
+```{r prediccion_modelo_todas_3}
+pred <- predict(modelo_todas_cv_tune,newdata = test_data[,-18])
 head(pred)
 caret::confusionMatrix(as.factor(pred),as.factor(test_data$ESCDIFFERENCE))
 ```
-```{r prediccion_modelo_todas}
+```{r prediccion_modelo_todas_4}
+train_data$ESCDIFFERENCE <- as.factor(train_data$ESCDIFFERENCE)
 modeloRF1<-randomForest(ESCDIFFERENCE~.,data=train_data)
 prediccionRF1<-predict(modeloRF1,newdata = test_data[,-18])
 confusionMatrix(as.factor(prediccionRF1), as.factor(test_data$ESCDIFFERENCE))
 ```
 
 
-```{r prediccion_modelo_todas}
+```{r prediccion_modelo_todas_5}
 mtry_vals <- 1:(ncol(train_data) - 1)
 train_data$ESCDIFFERENCE <- as.factor(train_data$ESCDIFFERENCE)
 test_data$ESCDIFFERENCE <- as.factor(test_data$ESCDIFFERENCE)
@@ -139,7 +140,7 @@ confusionMatrix(as.factor(prediccionRF1), as.factor(test_data$ESCDIFFERENCE))
 ```
 
 
-```{r prediccion_modelo_todas}
+```{r prediccion_modelo_todas_6}
 mtry_vals <- 1:(ncol(train_data) - 1)
 train_data$ESCDIFFERENCE <- as.factor(train_data$ESCDIFFERENCE)
 test_data$ESCDIFFERENCE <- as.factor(test_data$ESCDIFFERENCE)
@@ -149,7 +150,7 @@ confusionMatrix(as.factor(prediccionRF2), as.factor(test_data$ESCDIFFERENCE))
 ```
 
 
-```{r arbolito}
+```{r arbolito_1}
 
 # Make sure the target is a factor
 train_data$ESCDIFFERENCE <- as.factor(train_data$ESCDIFFERENCE)
@@ -170,7 +171,7 @@ confusionMatrix(as.factor(pred_tree), as.factor(test_data$ESCDIFFERENCE))
 ```
 
 
-```{r arbolito}
+```{r arbolito_2}
 
 cv_ctrl <- trainControl(method = "cv", number = 10)
 
@@ -201,7 +202,7 @@ rpart.plot(modelo_tree_tuned$finalModel, type = 3, extra = 101, fallen.leaves = 
 ```
 
 
-```{r arbolito}
+```{r arbolito_3}
 
 # Train decision tree with custom control parameters
 modelo_custom <- rpart(
@@ -222,3 +223,11 @@ confusionMatrix(as.factor(pred_tree), as.factor(test_data$ESCDIFFERENCE))
 
 
 ```
+
+En base a la variable objetivo (ESCDIFFERENCE), la cual es una variable categórica, el problema fue abordado como un problema de clasificación. Se utilizaron matrices de confusión para analizar el desempeño de cada uno de los algoritmos utilizados. Los modelos fueron entrenados con una división 70-30 de los datos, entre entrenamiento y prueba respectivamente. En todos los casos, los modelos tuvieron mejor precisión en las clases mas frecuentes ("Poca diferencia" y "Sin diferencia"). 
+
+Se realizó una regresión logística multinomial (multinom) con variantes de validación cruzada (10-fold y 1-fold) y con ajustes del hiperparámetro decay. Se observó que era mejor cuando tenía un decay cercano a 0.01. El modelo tuvo un desempeño aceptable, con un accuracy de ~0.51 en la predicción total de los datos, pero no fue tan bueno como los otros dos modelos realizados.
+
+El segundo mejor modelo realizado fueron los árboles de decisión. Se incluyó visualización de los modelos, lo que es útil para entender las relaciones entre las variables y las reglas de decisión. El modelo fue bastante bueno, mostrando una alta accuracy en las predicciones, aunque tampoco llegó a ser tan bueno como el mejor modelo analizado.
+
+Random Forest fue el mejor modelo que se utilizó para la predicción de los datos. Se probaron configuraciones con ntree=500 y distintos valores de mtry, siendo 7 el que obtuvo el mejor desempeño, con un accuracy de 0.9987. La matriz de confusión mostró un mayor equilibrio entre clases y menor tasa de error en comparación con los otros modelos. Este modelo presentó la mejor capacidad de predicción entre clases, robustez frente al desbalance de clases y fue menos sensible al ruido de los datos.

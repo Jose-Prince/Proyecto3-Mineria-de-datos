@@ -37,6 +37,1212 @@ filtered_data$ESCDIFFERENCE <- case_when(
 
 ```
 
+```{r echo=FALSE, warning=FALSE}
+library(dplyr)
+library(ggplot2)
+library(reshape2)
+library(factoextra)
+library(NbClust)
+library(hopkins)
+library(cluster)
+```
+
+```{r data loading, echo=FALSE}
+
+datos <- read.csv("merged_output.csv")
+datos_decod <- datos 
+
+dep_decod <- c(
+  "1" =	"Guatemala",
+  "2"	= "El Progreso",
+  "3" =	"Sacatepéquez",
+  "4" =	"Chimaltenango",
+  "5" =	"Escuintla",
+  "6" =	"Santa Rosa",
+  "7" =	"Sololá",
+  "8" =	"Totonicapán",
+  "9"	= "Quetzaltenango",
+  "10" = "Suchitepéquez",
+  "11" = "Retalhuleu",
+  "12" = "San Marcos",
+  "13" = "Huehuetenango",
+  "14" = "Quiché",
+  "15" = "Baja Verapaz",
+  "16" = "Alta Verapaz",
+  "17" = "Petén",
+  "18" = "Izabal",
+  "19" = "Zacapa",
+  "20" = "Chiquimula",
+  "21" = "Jalapa",
+  "22" = "Jutiapa"
+)
+
+pue_decod <- c(
+"1" = "Maya",
+"2" = "Garífuna",
+"3" = "Xinka",
+"4" = "Mestizo / Ladino",
+"5" = "Otro",
+"9" = "Ignorado"
+)
+
+esc_decod <- c(
+"1" = "Ninguno",
+"2" = "Primaria",
+"3" = "Básica",
+"4" = "Diversificado",
+"5" = "Universitario",
+"6" = "Postgrado",
+"9" = "Ignorado"
+)
+
+mun_decod <- c(
+  "101" = "Guatemala",
+  "102" = "Santa Catarina Pinula",
+  "103" = "San José Pinula",
+  "104" = "Palencia",
+  "105" = "Palencia",
+  "106" = "Chinautla",
+  "107" = "San Pedro Ayampuc",
+  "108" = "Mixco",
+  "109" = "San Pedro Sacatepéquez",
+  "110" = "San Juan Sacatepéquez",
+  "111" = "San Raymundo",
+  "112" = "Chuarrancho",
+  "113" = "Fraijanes",
+  "114" = "Amatitlán",
+  "115" = "Villa Nueva",
+  "116" = "Villa Canales",
+  "117" = "Petapa",
+  "201" = "Guastatoya",
+  "202" = "Morazán",
+  "203" = "San Agustín Acasaguastlán",
+  "204" = "San Cristóbal Acasaguastlán",
+  "205" = "El Jicaro",
+  "206" = "Sansare",
+  "207" = "Sanarate",
+  "208" = "San Antonio la Paz",
+  "301" = "Antigua Guatemala",
+  "302" = "Jocotenango",
+  "303" = "Pastores",
+  "304" = "Sumpango",
+  "305" = "Santo DOmingo Xenacoj",
+  "306" = "Santiago Sacatepéquez",
+  "307" = "San Bartolomé Milpas Altas",
+  "308" = "San Lucas Sacatepéquez",
+  "309" = "Santa Lucía Milpas Altas",
+  "310" = "Magdalena Milpas Altas",
+  "311" = "Santa María de Jesús",
+  "312" = "Ciudad Vieja",
+  "313" = "San Miguel Dueñas",
+  "314" = "Alotenango",
+  "315" = "San Antonio Aguas Calientes",
+  "316" = "Santa CAtarina Barahona",
+  "401" = "Chimaltenango",
+  "402" = "San José Poaquil",
+  "403" = "San Martin Jilotepeque",
+  "404" = "Comalapa",
+  "405" = "Santa Apolonia",
+  "406" = "Tecpán Guatemala",
+  "407" = "Patzún",
+  "408" = "Pochuta",
+  "409" = "Patzicia",
+  "410" = "Santa Cruz Balanyá",
+  "411" = "Acatenango",
+  "412" = "Yepocapa",
+  "413" = "San Andrés Itzapa",
+  "414" = "Parramos",
+  "415" = "Zaragosa",
+  "416" = "El Tejar",
+  "501" = "Escuintla",
+  "502" = "Santa Lucia Cotzumalguapa",
+  "503" = "La Democracia",
+  "504" = "Siquinalá",
+  "505" = "Masagua",
+  "506" = "Tiquisate",
+  "507" = "La Gomera",
+  "508" = "Guanagazapa",
+  "509" = "San José",
+  "510" = "Iztapa",
+  "511" = "Palin",
+  "512" = "San Vicente Pacaya",
+  "513" = "Nueva COncepción",
+  "514" = "Sipacate",
+  "601" = "Cuilapa",
+  "602" = "Barberena",
+  "603" = "Santa Rosa de Lima",
+  "604" = "Casillas",
+  "605" = "San Rafael las Flores",
+  "606" = "Oratorio",
+  "607" = "San Juan Tecuaco",
+  "608" = "Chiquimulilla",
+  "609" = "Taxisco",
+  "610" = "Santa Maria Ixhuatán",
+  "611" = "Guazacapán",
+  "612" = "Santa Cruz Naranjo",
+  "613" = "Pueblo Nuevo Viñas",
+  "614" = "Nueva Santa Rosa",
+  "701" = "Sololá",
+  "702" = "San José Chacayá",
+  "703" = "Santa María Visitación",
+  "704" = "Santa Lucía Utatlán",
+  "705" = "Nahualá",
+  "706" = "Santa Catarina Ixtahuacán",
+  "707" = "Santa Clara la Laguna",
+  "708" = "Concepción",
+  "709" = "San Andrés Semetabaj",
+  "710" = "Panajachel",
+  "711" = "Santa Catarina Palopó",
+  "712" = "San Antonio Palopó",
+  "713" = "San Lucás Tolimán",
+  "714" = "Santa Cruz la Laguna",
+  "715" = "San Pablo la Laguna",
+  "716" = "San MArcos la Laguna",
+  "717" = "San Juan la Laguna",
+  "718" = "San Pedro la Laguna",
+  "719" = "Santiago Atitlán",
+  "801" = "Totonicapán",
+  "802" = "San Critobal Totónicapán",
+  "803" = "San Francisco el Alto",
+  "804" = "San Andrés Xecul",
+  "805" = "Momostenango",
+  "806" = "Santa Maria Chiquimula",
+  "807" = "Santa Lucía la Reforma",
+  "808" = "San Bartolo",
+  "901" = "Quetzaltenango",
+  "902" = "Salcajá",
+  "903" =  "Olintepeque",
+  "904" = "San Carlos Sija",
+  "905" = "Sibilia",
+  "906" = "Cabricán",
+  "907" = "Cajolá",
+  "908" = "San Miguel Siguilá",
+  "909" = "Ostuncalco",
+  "910" = "San Mateo",
+  "911" = "Concepción Chiquirichapa",
+  "912" = "San Martín Sacatepequéz",
+  "913" = "Almolonga",
+  "914" = "Cantel",
+  "915" = "Huitán",
+  "916" = "Zunil",
+  "917" = "Colomba",
+  "918" = "San Francisco la Unión",
+  "919" = "El PAlmar",
+  "920" = "Coatepeque",
+  "921" = "Génova",
+  "922" = "Flores Costa Cuca",
+  "923" = "La Esperanza",
+  "924" = "Palestina de los Altos",
+  "1001" = "Mazatenango",
+  "1002" = "Cutotenango",
+  "1003" = "San Francisco Zapotitlán",
+  "1004" = "San Bernardino",
+  "1005" = "San José el Idolo",
+  "1006" = "Santo Domingo Suchitepequéz",
+  "1007" = "San Lorenzo",
+  "1008" = "Samayac",
+  "1009" = "San Pabl Jocopilas",
+  "1010" = "San Antonio Suchitepéquez",
+  "1011" = "San Miguel Panán",
+  "1012" = "San Gabriel",
+  "1013" = "Chicacao",
+  "1014" = "Patulul",
+  "1015" = "Santa Bárbara",
+  "1016" = "San Juan Bautista",
+  "1017" = "Santo Romás la Unión",
+  "1018" = "Zunilito",
+  "1019" = "Pablo Nuevo",
+  "1020" = "Río Bravo",
+  "1021" = "San José La Máquina",
+  "1101" = "Retalhuleu",
+  "1102" = "San Sebastián",
+  "1103" = "Santa Cruz Mulua",
+  "1104" = "San Martín Zapotitlán",
+  "1105" = "San Felipe",
+  "1106" = "San Andrés Villa Seca",
+  "1107" = "Champerico",
+  "1108" = "Nuevo San Carlos",
+  "1109" = "El Asintal",
+  "1201" = "San Marcos",
+  "1202" = "San Pedro Sacatepéquez",
+  "1203" = "San Antonio Sacatepéquez",
+  "1204" = "Comitancillo",
+  "1205" = "San Miguel Ixtahuacán",
+  "1206" = "Concepción Tutuapa",
+  "1207" = "Tacaná",
+  "1208" = "Sibinal",
+  "1209" = "Tajumulco",
+  "1210" = "Tejutla",
+  "1211" = "San Rafael Pié de la Cuesta",
+  "1212" = "Nuevo Progreso",
+  "1213" = "El Tumbador",
+  "1214" = "El Rodeo",
+  "1215" = "Malacatán",
+  "1216" = "Catarina",
+  "1217" = "Ayutla",
+  "1218" = "Ocós",
+  "1219" = "San Pablo",
+  "1220" = "El Quetzal",
+  "1221" = "La Reforma",
+  "1222" = "Pajapita",
+  "1223" = "Ixchiguán",
+  "1224" = "San José Ojetenán",
+  "1225" = "San Cristóbal Cucho",
+  "1226" = "Sipacapa",
+  "1227" = "Esquipulas Palo Gordo",
+  "1228" = "Río Blanco",
+  "1229" = "San Lorenzo",
+  "1230" = "La Blanca",
+  "1301" = "Huehuetenango",
+  "1302" = "Chiantla",
+  "1303" = "Malacatancito",
+  "1304" = "Cuilco",
+  "1305" = "Nentón",
+  "1306" = "San Pablo Necta",
+  "1307" = "Jacaltenango",
+  "1308" = "Soloma",
+  "1309" = "Ixtahuacán",
+  "1310" = "Santa Bárbara",
+  "1311" = "La Libertad",
+  "1312" = "La Democracia",
+  "1313" = "San Miguel Acatán",
+  "1314" = "San Rafael la Independencia",
+  "1315" = "Todos Santos Cuchumatán",
+  "1316" = "San Juán Atitán",
+  "1317" = "Santa Eulalia",
+  "1318" = "San Mateo Ixtatán",
+  "1319" = "Colotenango",
+  "1320" = "San Sebastián Huehuetenango",
+  "1321" = "Tectitán",
+  "1322" = "Concepción Huista",
+  "1323" = "San Juan Ixcoy",
+  "1324" = "San Antonio Huista",
+  "1325" = "San Sebastián Coatán",
+  "1326" = "Barillas",
+  "1327" = "Aguacatán",
+  "1328" = "San Rafael Petzal",
+  "1329" = "San Gaspar Ixchil",
+  "1330" = "Santiago Chimaltenango",
+  "1331" = "Santa Ana Hustia",
+  "1332" = "Unión Cantinil",
+  "1333" = "Petatán",
+  "1401" = "Santa Cruz del Quiché",
+  "1402" = "Chiché",
+  "1403" = "Chinique",
+  "1404" = "Zacualpa",
+  "1405" = "Chajul",
+  "1406" = "Chichicastenango",
+  "1407" = "Patzité",
+  "1408" = "San Antonio Ilotenango",
+  "1409" = "San Pedro Jocolipas",
+  "1410" = "Cunén",
+  "1411" = "San Juan Cotzal",
+  "1412" = "Joyabaj",
+  "1413" = "Nebaj",
+  "1414" = "San Andrés Sajcabajá",
+  "1415" = "Uspantán",
+  "1416" = "Sacapulas",
+  "1417" = "San Bartolomé Jocotenango",
+  "1418" = "Canillá",
+  "1419" = "Chicamán",
+  "1420" = "Ixcán",
+  "1421" = "Pachalum",
+  "1501" = "Salamá",
+  "1502" = "San Miguel Chicaj",
+  "1503" = "Rabinal",
+  "1504" = "Cubulco",
+  "1505" = "Granados",
+  "1506" = "El Chol",
+  "1507" = "San Jerónimo",
+  "1508" = "Purulhá",
+  "1601" = "Cobán",
+  "1602" = "Santa Cruz Verapaz",
+  "1603" = "San Cristobal Verapaz",
+  "1604" = "Tactic",
+  "1605" = "Tamahú",
+  "1606" = "Tucurú",
+  "1607" = "Panzós",
+  "1608" = "Senahú",
+  "1609" = "San Pedro Carchá",
+  "1610" = "San Juan Chamelco",
+  "1611" = "Lanquín",
+  "1612" = "Cahabón",
+  "1613" = "Chisec",
+  "1614" = "Chahal",
+  "1615" = "Fray Bartolomé de las Casas",
+  "1616" = "Santa Catalina la Tinta",
+  "1617" = "Raxruhá",
+  "1701" = "Flores",
+  "1702" = "San José",
+  "1703" = "San Benito",
+  "1704" = "San Andrés",
+  "1705" = "La Libertad",
+  "1706" = "San Francisco",
+  "1707" = "Santa Ana",
+  "1708" = "Dolores",
+  "1709" = "San Luis",
+  "1710" = "Sayaxché",
+  "1711" = "Melchor de Mencos",
+  "1712" = "Poptún",
+  "1713" = "Las Cruces",
+  "1714" = "El Chal",
+  "1801" = "Puetto Barrios",
+  "1802" = "Livingston",
+  "1803" = "El Estor",
+  "1804" = "Morales",
+  "1805" = "Los Amates",
+  "1901" = "Zacapa",
+  "1902" = "Estanzuela",
+  "1903" = "Río Hondo",
+  "1904" = "Gualán",
+  "1905" = "Teculután",
+  "1906" = "Usumatlán",
+  "1907" = "Cabañas",
+  "1908" = "San Diego",
+  "1909" = "La Unión",
+  "1910" = "Huité",
+  "1911" = "San Jorge",
+  "2001" = "Chiquimula",
+  "2002" = "San José LA Arada",
+  "2003" = "San Juan Ermita",
+  "2004" = "Jocotán",
+  "2005" = "Camotán",
+  "2006" = "Olopa",
+  "2007" = "Esquipulas",
+  "2008" = "Concepción Las Minas",
+  "2009" = "Quetzaltepeque",
+  "2010" = "San Jacinto",
+  "2011" = "Ipala",
+  "2101" = "Jalapa",
+  "2102" = "San Pedro Pinula",
+  "2103" = "San Luis Jilotepeque",
+  "2104" = "San Manuel Chaparrón",
+  "2105" = "San Carlos Alzatate",
+  "2106" = "Monjas",
+  "2107" = "Mataquescuintla",
+  "2201" = "Jutiapa",
+  "2202" = "El Progreso",
+  "2203" = "Santa Catarina Mita",
+  "2204" = "Agua Blanca",
+  "2205" = "Asunción Mita",
+  "2206" = "Yupiltepeque",
+  "2207" = "Atescatempa",
+  "2208" = "Jerez",
+  "2209" = "El Adelanto",
+  "2210" = "Zapotitlán",
+  "2211" = "Comapa",
+  "2212" = "Jalpatagua",
+  "2213" = "Conguaco",
+  "2214" = "Moyuta",
+  "2215" = "Pasaco",
+  "2216" = "San José Acatempa",
+  "2217" = "Quesada"
+  )
+
+nac_decod <- c(
+  "32" = "Argentina",
+  "68" = "Bolivia",
+  "152" = "Chile",
+  "170" = "Colombia",
+  "188" = "Costa Rica",
+  "192" = "Cuba",
+  "214" = "República Dominicana",
+  "218" = "Ecuador",
+  "222" = "El Salvador",
+  "276" = "Alemania",
+  "320" = "Guatemala",
+  "340" = "Honduras",
+  "364" = "Irán",
+  "484" = "México",
+  "568" = "G. Bretaña E Irl. Del N.",
+  "600" = "Paraguay",
+  "604" = "Perú",
+  "608" = "Filipinas",
+  "718" = "Holanda (Paises Bajos)",
+  "720" = "Nicaragua",
+  "725" = "República Checa",
+  "752" = "Suecia",
+  "826" = "Reino Unido",
+  "840" = "Estados Unidos",
+  "1034" = "Republica Bolivariana de Venezuela",
+  "1020" = "Francia",
+  "9999" = "Ignorado"
+)
+
+ciuo_decod <- c(
+  "1.0" = "Oficiales de las fuerzas armadas",
+  "3.0" = "Otros miembros de las fuerzas armadas",
+  "11.0" = "Directores ejecutivos, personal directivo de la administración pública y miembros del poder ejecutivo y de los cuerpos l",
+  "12.0" = "Directores administradores y comerciales",
+  "14.0" = "Gerentes de hoteles, restaurantes, comercios y otros servicios",
+  "21.0" = "Profesionales de las ciencias y de la ingeniería",
+  "22.0" = "Profesionales de la salud",
+  "23.0" = "Profesionales de la enseñanzas",
+  "24.0" = "Especialistas en organización de la administración pública y de empresa",
+  "25.0" = "Profesionales de tecnología de la información y las comunicaciones",
+  "26.0" = "Profesionales en derecho, en ciencias sociales y culturales",
+  "31.0" = "Profesionales de las ciencias y la ingeniería de nivel medio",
+  "32.0" = "Profesionales de nivel medio de la salud",
+  "33.0" = "Profesionales de nivel medio en operaciones financieras y administrativas",
+  "34.0" = "Profesionales de nivel medio de servicios jurídicos, sociales, culturales y afines",
+  "35.0" = "Técnicos de la tecnología de la información y las comunicaciones",
+  "41.0" = "Oficinistas",
+  "42.0" = "Empleados de trato directo con el público",
+  "43.0" = "Empleados contables y encargados del registro de materiales",
+  "44.0" = "Otro personal de apoyo administrativo",
+  "51.0" = "Trabajadores de los servicios personales",
+  "52.0" = "Vendedores",
+  "53.0" = "Trabajadores de los cuidados personales",
+  "54.0" = "Personal de los servicios de protección",
+  "61.0" = "Agricultores y trabajadores calificados de explotaciones agropecuarias con destino al mercado",
+  "62.0" = "Trabajadores forestales calificados, pescadores y cazadores",
+  "71.0" = "Oficiales y operarios de la construcción excluyendo electricistas",
+  "72.0" = "Oficiales y operarios de la metalurgia, la construcción mecánica y afines",
+  "73.0" = "Artesanos y operarios de las artes gráficas",
+  "74.0" = "Trabajadores especializados en electricidad y la elecretecnología",
+  "75.0" = "Operarios y oficiales de procesamiento de alimentos, de la confección, ebanistas, otros artesanos y afines",
+  "81.0" = "Operadores de instalaciones fijas y máquinas",
+  "82.0" = "Ensambladores",
+  "83.0" = "Conductores de vehículos y operadores de equipos pesados móviles",
+  "91.0" = "Limpiadores y asistentes",
+  "92.0" = "Peones agropecuarios, pesqueros y forestales",
+  "93.0" = "Peones de la minería, la construcción, la industria manufacturera y el transporte",
+  "94.0" = "Ayudantes de preparación de alimentos",
+  "95.0" = "Vendedores ambulantes de servicios y afines",
+  "96.0" = "Recolectores de desechos y otras ocupaciones elementales",
+  "97.0" = "No especificado en otro grupo",
+  "98.0" = "No especificado en otro grupo",
+  "99.0" = "Ignorado"
+)
+
+
+
+datos_decod$DEPREG <- dep_decod[as.character(datos$DEPREG)]
+datos_decod$DEPOCU <- dep_decod[as.character(datos$DEPOCU)]
+datos_decod$PUEHOM <- pue_decod[as.character(datos$PUEHOM)]
+datos_decod$PUEMUJ <- pue_decod[as.character(datos$PUEMUJ)]
+datos_decod$ESCHOM <- esc_decod[as.character(datos$ESCHOM)]
+datos_decod$ESCMUJ <- esc_decod[as.character(datos$ESCMUJ)]
+datos_decod$MUPREG <- mun_decod[as.character(datos$MUPREG)]
+datos_decod$MUPOCU <- mun_decod[as.character(datos$MUPOCU)]
+datos_decod$NACHOM <- nac_decod[as.character(datos$NACHOM)]
+datos_decod$NACMUJ <- nac_decod[as.character(datos$NACMUJ)]
+datos_decod$CIUOHOM <- ciuo_decod[as.character(datos$CIUOHOM)]
+datos_decod$CIUOMUJ <- ciuo_decod[as.character(datos$CIUOMUJ)]
+
+```
+
+## Situación Problemática
+
+### Planteamiento del Problema
+En las últimas décadas, la edad a la que las parejas se divorciaron ha cambiado considerablemente. La edad media de divorcio se ha incrementado, y varios estudios sugieren que la presión laboral, la dificultad para equilibrar las responsabilidades familiares y el estrés económico pueden influir en la estabilidad de los matrimonios. Sin embargo, existe la pregunta de si el momento en que las parejas deciden divorciarse está relacionado con su edad y con la dinámica de trabajo que enfrentan.
+
+El comportamiento de las parejas frente al divorcio está condicionado por muchos factores, como el avance de la carrera profesional, las expectativas familiares y las responsabilidades laborales. Los hombres y mujeres que se casan a edades más jóvenes suelen enfrentar mayores desafíos relacionados con la madurez emocional, el establecimiento de una carrera profesional y la formación de una familia. Estos factores pueden influir en la aparición de tensiones y conflictos, que eventualmente podrían desembocar en una separación.
+
+Por otro lado, las parejas que se divorcian a edades más avanzadas podrían enfrentar diferentes retos, como la adaptación a cambios en sus roles laborales, el vacío de los hijos ya adultos o los efectos del envejecimiento. Además, el tipo de ocupación y las horas de trabajo pueden jugar un papel importante en la acumulación de tensiones dentro de la relación, afectando la duración del matrimonio y el momento en que se toma la decisión de divorciarse.
+
+### Pregunta de Investigación:
+¿Cómo influye la edad de los cónyuges y su ocupación en el momento en que se produce el divorcio y en la estabilidad matrimonial?
+
+## Problema Científico
+En las últimas décadas, los patrones de divorcio han mostrado cambios significativos, con un incremento en la edad promedio de las parejas que deciden separarse. Si bien existen diversos factores que influyen en la disolución matrimonial, la relación entre la edad de los cónyuges, su ocupación y la estabilidad matrimonial sigue siendo un área de investigación relevante y poco comprendida.
+
+La dinámica laboral, las presiones económicas y las expectativas sociales pueden generar tensiones que afectan la convivencia y el bienestar emocional de las parejas. Por un lado, las personas que contraen matrimonio a edades más jóvenes suelen enfrentar desafíos asociados con la inmadurez emocional, la falta de estabilidad financiera y la incertidumbre profesional. Por otro lado, las parejas que deciden separarse a edades más avanzadas pueden verse influidas por otros factores, como el desgaste emocional acumulado, la adaptación a nuevas etapas de la vida o los cambios en sus roles laborales.
+
+Además, el tipo de ocupación desempeñado por cada cónyuge puede influir significativamente en la estabilidad matrimonial. Profesiones con largas jornadas laborales, altos niveles de estrés o falta de conciliación entre la vida personal y profesional pueden incrementar el riesgo de divorcio. A su vez, las diferencias en los ingresos económicos y las percepciones de equidad en las responsabilidades familiares también pueden desencadenar conflictos.
+
+Por lo tanto, resulta fundamental investigar cómo la edad de los cónyuges y su situación laboral influyen en el momento en que se produce el divorcio. Comprender estos factores permitirá no solo identificar los principales determinantes del divorcio en diferentes etapas de la vida, sino también contribuir al desarrollo de políticas públicas y programas de apoyo que promuevan relaciones más estables y saludables.
+
+Este estudio se centrará en explorar la relación entre la edad de los cónyuges, sus ocupaciones y la probabilidad de divorcio, con el objetivo de proporcionar una visión integral sobre las dinámicas matrimoniales contemporáneas.
+
+## Objetivos
+
+
+### Objetivo General
+Analizar la influencia de la edad y las ocupaciones laborales en el momento en que las parejas deciden divorciarse, explorando cómo estas variables afectan la estabilidad matrimonial y la duración de los matrimonios.
+
+### Objetivos Específicos
+Investigar la relación entre la edad de los cónyuges y el tiempo de duración del matrimonio, identificando los momentos críticos en los que es más probable que ocurra el divorcio.
+
+Evaluar el impacto de las responsabilidades laborales y la ocupación de los cónyuges en las tensiones dentro del matrimonio, analizando si ciertas ocupaciones o niveles de estrés laboral están correlacionados con una mayor probabilidad de divorcio.
+
+## Descripción de los datos
+
+Variable Categórica
+DEPREG  - Departamento de registro     
+Representa el departamento en el cual se registró el evento (1-22)
+
+Variable Categórica
+MUPREG  - Municipio de registro
+Representa el municipio en el cual se registró el evento ( 0101-2217 )
+
+Variable Categórica
+MESREG  - Mes de registro
+Representa el mes en el cual se registró el evento
+(1-12)
+
+Variable Númerica
+AÑOREG  - Año de registro es representado desde (2012-2024)
+
+Variable Categórica
+DIAOCU  - Dia de ocurrencia (1-30)
+
+Variable Ctaegórica
+MESOCU  - Mes de ocurrencia (1-12)
+
+Variable Númerica
+AÑOOCU  - Año ocurrencia (2012-2024)
+
+Variable Categórica
+DEPOCU  - Departamento de Ocurrencia (1-22)
+
+Variable Categórica
+MUPOCU  - Municipio de ocurrencia ( 0101-2217 )
+Lugar que ocurrio el divorcio
+
+Variable Númerica
+EDADHOM - Edad del hombre rango de 1-100 año y 999 como ignorado
+
+Variable Númerica
+EDADMUJ - Edad de la Mujer  rango de 1-100 año 999 como ignorado 
+
+Variable Categórica
+PUEHOM  - Pueblo de pertenencia del hombre  (1-5), 9 is ignorado
+Es la etnia que pertenece si es Maya, Garifuna o Xinca entre otros. 
+
+Variable Categórica
+PUEMUJ  - Pueblo de pertenencia de la mujer  (1-5), 9 is ignorado
+Es la etnia que pertenece si es Maya, Garifuna o Xinca entre otros. 
+
+Variable Categórica
+NACHOM  - Nacionalidad del hombre
+(argentina, peru, Guatemala, Venezuela etc..)
+Denotados por números aunque se observa que 9999 representa valor ignorado
+
+Variable Categórica
+NACMUJ  - Nacionalidad de la mujer
+(argentina, peru, Guatemala, Venezuela etc..)
+Denotados por números aunque se observa que 9999 representa valor ignorado
+
+Variable Categórica
+ESCHOM  - Escolaridad del hombre 
+rango de 1 a 6 siendo 1 ninguno y 6 postgrado
+9 es ignorado
+
+Variable Categórica
+ESCMUJ  - Escolaridad de la mujer
+rango de 1 a 6 siendo 1 ninguno y 6 postgrado
+9 es ignorado
+
+Variable Categórica
+CIUOHOM - Ocupación (Subgrupos, CIUO-08) del hombre
+Ocupación (trabajo) denotado por 01-96 del otro lado se pone IGNORADO y en caso no estar especificado se pone NEOG
+
+Variable Categórica
+CIUOMUJ - Ocupación (Subgrupos, CIUO-08) de la mujer 
+Ocupación (trabajo) denotado por 01-96 del otro lado se pone IGNORADO y en caso no estar especificado se pone NEOG
+
+
+
+Tomar nota que hay unas discrepancias con las ocupaciones en la lista de variables ya que hay algunos archivos en EXCEL que utilizaron codigo de 4 digitos y otros de 2 digitos. Por otro lado si no se encuentra de la lista se tomara en cuenta como otra etiqueta 97 No especificado en otro grupo Por otro lado si hay 9999 se tomara como IGNORADO
+
+
+
+Se observa tambien que las variables estan denotadas por codigo lo cual se tiene que utilizar excel de definicion de variables para saber la etiqueta. 
+
+```{r echo=FALSE}
+length(colnames(datos))
+
+nrow(datos)
+```
+Se observa que hay un total de 19 variables a medir. De estas existen 7 variables que son númericas y 12 variables que son categoricas. Ademas de eso contamos con más de 81826 filas de registros dentro del rango de años 2012 a 2024. 
+```{r echo=FALSE}
+summary(datos)
+```
+Se observa que hay un total de 19 variables a medir. De estas existen 7 variables que son númericas y 12 variables que son categoricas. 
+
+## Análisis Exploratorio
+
+### Outliers 
+
+```{r numeric outliers, echo=FALSE}
+
+media_edadH <- mean(datos_decod$EDADHOM[datos_decod$EDADHOM != 999], na.rm = TRUE)
+media_edadM <- mean(datos_decod$EDADMUJ[datos_decod$EDADMUJ != 999], na.rm = TRUE)
+datos_decod$EDADHOM[datos_decod$EDADHOM == 999] <- media_edadH
+datos_decod$EDADMUJ[datos_decod$EDADMUJ == 999] <- media_edadM
+
+```
+
+Analizando las variables numéricas se encontraron varios datos átipicos que no permiten analizar correctamente este dataset. El primero de ellos es que en AÑOOCU habian datos NA y en las variables EDADHOM y EDADMUJ se encontro que algunas edades estaban colocadas como 999 indicando que la edad era desconocida. En este caso este valor se interpreta como NA y se cambio el 999 por la media de cada edad correpondiente a su sexo.
+
+```{r categoric outliers, echo=FALSE}
+categoricas_vars <- c(
+ "DIAOCU", "MESOCU", "DEPREG", "MUPREG", "MESREG", "DEPOCU", "MUPOCU", "PUEHOM", "PUEMUJ", "NACHOM", "NACMUJ", "ESCHOM", "ESCMUJ", "CIUOHOM", "CIUOMUJ"
+)
+
+# Función para encontrar los valores menos frecuentes
+valores_menos_frecuentes <- function(data, variable) {
+  tabla_frecuencias <- table(data[[variable]])
+  min_frecuencia <- min(tabla_frecuencias)
+  valores_menos_frecuentes <- names(tabla_frecuencias[tabla_frecuencias == min_frecuencia])
+  return(valores_menos_frecuentes)
+}
+
+# Aplicar la función a cada variable categórica
+resultados <- lapply(categoricas_vars, function(var) {
+  valores <- valores_menos_frecuentes(datos_decod, var)
+  return(list(variable = var, valores_menos_frecuentes = valores))
+})
+
+# Imprimir los resultados
+for (resultado in resultados) {
+  cat("Variable:", resultado$variable, "\n")
+  cat("Valores menos frecuentes:", paste(resultado$valores_menos_frecuentes, collapse = ", "), "\n\n")
+}
+
+```
+
+De esta forma podemos ver los valores menos comunes (valores atípicos) para las variables categoricas, no hay la necesidad de realizar ninguna transformación para los datos. Es importante recalcar que estos datos es importante contrastarlos con el resto de las variables para identificar si realmente son datos átipicos. Este analisis se realizará más adelante en el analisis categorico de las variables.
+
+### Exploración variables númericas
+
+Se tienen las siguientes variables como númericas:
+
+- **AÑOREG** - Año de registro
+- **AÑOOCU** - Año de ocurrencia  
+- **EDADHOM** - Edad del hombre 
+- **EDADMUJ** - Edad de la mujer
+
+```{r num var exploration, echo=FALSE}
+
+datos_numericos <- datos_decod[, c("AÑOREG", "AÑOOCU", "EDADHOM", "EDADMUJ")]
+
+calcular_estadisticas <- function(columna) {
+  lista <- list(
+    Media = mean(columna, na.rm = TRUE),
+    Mediana = median(columna, na.rm = TRUE),
+    Moda = as.numeric(names(sort(table(columna), decreasing = TRUE)[1])),
+    Rango = range(columna, na.rm = TRUE),
+    Varianza = var(columna, na.rm = TRUE),
+    Desviacion_Estandar = sd(columna, na.rm = TRUE),
+    Minimo = min(columna, na.rm = TRUE),
+    Q1 = quantile(columna, 0.25, na.rm = TRUE),
+    Q2 = quantile(columna, 0.50, na.rm = TRUE),
+    Q3 = quantile(columna, 0.75, na.rm = TRUE),
+    Maximo = max(columna, na.rm = TRUE)
+  )
+  return(lista)
+}
+
+estadisticas <- lapply(datos_numericos, calcular_estadisticas)
+
+for (variable in names(estadisticas)) {
+  cat("\n", variable, "\n")
+  for (nombre_estadistica in names(estadisticas[[variable]])) {
+    cat(nombre_estadistica, ":", estadisticas[[variable]][[nombre_estadistica]], "\n")
+  }
+}
+
+```
+
+```{r echo=FALSE}
+library(tidyr)
+
+datos_num_mod <- datos_numericos %>%
+  select(EDADHOM, EDADMUJ) %>%
+  pivot_longer(cols = everything(), names_to = "Genero", values_to = "Edad") %>%
+  mutate(Genero = recode(Genero, EDADHOM = "Hombre", EDADMUJ = "Mujer"))
+
+ggplot(datos_num_mod, aes(x = Genero, y = Edad, fill = Genero)) +
+  geom_boxplot() +
+  labs(
+    title = "Distribución de edades al momento del divorcio",
+    x = "Género",
+    y = "Edad"
+  ) +
+  theme_minimal()
+```
+
+El análisis de las variables numéricas revela tendencias significativas en los datos. Para las fechas de registro y ocurrencia (AÑOREG y AÑOOCU), se observa que la media y la mediana están cerca de 2019, lo que indica que la mayoría de los eventos se registraron  en años recientes. La moda en ambos casos es 2023, lo que sugiere un aumento en los registros en ese año. La dispersión de los datos es baja, con desviaciones estándar de 3.52 y 2.61 respectivamente, lo que implica que la mayoría de los valores se concentran en torno a la media. EN cuanto a los días y meses de ocurrencia (DIAOCU y MESOCU), la distribución parece uniforme, con valores centrales en torno al día 16 y al mes 6. La desviación estándar en el día de ocurrencia es de 8.68, lo que indica mayor variabilidad en los días en comparación con los meses.
+
+Respecto a las edades (EDADHOM y EDADMUJ), las medias son de aproximadamente 36 y 33 años respectivamente, con una dispersión relativamente baja. Esto sugiere que la mayoría de los registros corresponden a adultos jóvenes (este dato debe ser corroborado debido a la omisión de muchas edades en el dataset). El rango de los hombres es mayor (15 - 98 años) en comparación con el de las mujeres (15 - 81 años), lo que podría reflejar una mayor presencia de hombres de mayor edad en los registros. En general, la distribución de las edades es relativamente homogénea.
+
+```{r echo=FALSE}
+media_edad_hombre <- mean(datos_numericos$EDADHOM, na.rm = TRUE)
+media_edad_mujer <- mean(datos_numericos$EDADMUJ, na.rm = TRUE)
+
+datos_filtrados <- datos_numericos[!(datos_numericos$EDADHOM == media_edad_hombre & datos_numericos$EDADMUJ == media_edad_mujer), ]
+
+ggplot(datos_filtrados, aes(x = EDADHOM, y = EDADMUJ)) +
+  geom_point(alpha = 0.4, color = "darkgreen") +
+  geom_abline(slope = 1, intercept = 0, color = "gray", linetype = "dashed") +
+  labs(
+    title = "Relación entre la edad del hombre y la mujer al divorciarse (excluyendo medias)",
+    x = "Edad del hombre",
+    y = "Edad de la mujer"
+  ) +
+  theme_minimal()
+
+```
+A traves del grafico de dispersion se puede observar con mayor detalle la relacion entre las edades de los hombres y las mujeres divorciados en el conjunto de datos. La linea de identidad nos ayuda a identificar de manera mas visual que las edades de los hombres suelen ser mayores que las de las mujeres. Cabe notar que aproximadamente antes de los 35 años, las edades entre las personas son similares, y luego de este numero las edades de los hombres suele aumenta en relacion a las de las mujeres; esto se puede observar ya que la mayoria de los datos pasados los 35 años se encuentran debajo de la linea de identidad.
+
+### Exploración variables categoricas
+
+Se tienen las siguientes variables como categóricas:
+
+- **DIAOCU** - Día de ocurrencia
+- **MESOCU** - Mes de ocurrencia
+- **DEPREG** - Departamento de registro  
+- **MUPREG** - Municipio de registro  
+- **MESREG** - Mes de registro  
+- **DEPOCU** - Departamento de ocurrencia  
+- **MUPOCU** - Municipio de ocurrencia  
+- **PUEHOM** - Pueblo de pertenencia del hombre  
+- **PUEMUJ** - Pueblo de pertenencia de la mujer  
+- **NACHOM** - Nacionalidad del hombre  
+- **NACMUJ** - Nacionalidad de la mujer  
+- **ESCHOM** - Escolaridad del hombre  
+- **ESCMUJ** - Escolaridad de la mujer  
+- **CIUOHOM** - Ocupación del hombre (según CIUO-08)
+- **CIUOMUJ** - Ocupación de la mujer (según CIUO-08)
+
+Las variables que se decodificaron fueron seleccionadas debido a que estas son relevantes para enteder los datos a simple vista. Las variables de nacionalidad, municipio y ocupacion no fueron decodificadas debido a la cantidad de datos en estas, los cuales, al decodificar, podrian causar complicaciones en la legibilidad y comprension de los datos.
+
+```{r cat var exploration, echo=FALSE}
+datos_categoricos <- datos_decod[, c("DEPREG", "MUPREG", "DEPOCU", "MUPOCU", "PUEHOM", "PUEMUJ", "NACHOM", "NACMUJ", "ESCHOM", "ESCMUJ", "CIUOHOM", "CIUOMUJ", "DIAOCU", "MESOCU")]
+
+generar_tabla_frecuencia <- function(columna) {
+  tabla <- table(columna)
+  # Convertir la tabla a un dataframe para mejor visualización
+  tabla_df <- as.data.frame(tabla)
+  names(tabla_df) <- c("Categoría", "Frecuencia")
+  return(tabla_df)
+}
+
+tablas_frecuencia <- lapply(datos_categoricos, generar_tabla_frecuencia)
+
+for (variable in names(tablas_frecuencia)) {
+  cat("\n", variable, "\n")
+  print(tablas_frecuencia[[variable]])
+}
+```
+
+El análsis de las tablas de frecuencia de DEPREG y MUPREG revela una distribución desigual de los datos. En DEPREG, la categoría con mayor frecuencia es la primera, con 31,204 casos, lo que representa una concentración significativa en comparación con las demás. Otras categorías muestran una distribución más dispersa, con valores que oscilan entre 952 y 6,827, lo que sugiere una fuerte asimetría en los datos. Este patrón indica que la mayoría de los registros pertenecen a una sola categoría, mientras que las demás están distribuidas en menor medida.
+
+Por otro lado, MUPREG presenta una ayor dispersión con un número más elevado de categorías, algunas con muy pocos registros. La categoría más frecuente (101) tiene 23,848 casos, superando ampliamente a las demás, mientras que muchas otras tienen frecuencias menores a 1,000. Esto sugiere que ciertos valores dominan la distribución mientras que la mayoría son poco representativos. La alta variabilidad en la distribución de frecuencia indica la necesidad de un análisis más profundo para comprender la relevancia de cada categoría y su impacto en el conjunto de datos.
+
+Se estaran utilizando las siguientes variables para realizar un analisis categorico: "DEPREG", "MUPREG", "DEPOCU", "MUPOCU","PUEHOM", "PUEMUJ", "NACHOM", "NACMUJ","ESCHOM", "ESCMUJ", "CIUOHOM", "CIUOMUJ"
+```{r  echo=FALSE}
+datos_categoricos <- datos[, c("DEPREG", "MUPREG", "DEPOCU", "MUPOCU", 
+                               "PUEHOM", "PUEMUJ", "NACHOM", "NACMUJ", 
+                               "ESCHOM", "ESCMUJ", "CIUOHOM", "CIUOMUJ")]
+
+head(datos_categoricos)
+
+```
+
+## Cuantos registros de divorcios hay en cada departamento?
+```{r  echo=FALSE}
+freq_table <- as.data.frame(table(datos_decod$DEPREG))
+colnames(freq_table) <- c("DEPREG", "Frecuencia")
+print(head(freq_table))
+
+# Plot with different colors for each category
+ggplot(freq_table, aes(x = reorder(DEPREG, -Frecuencia), y = Frecuencia, fill = DEPREG)) +
+  geom_bar(stat = "identity") +
+  theme_minimal() +
+  labs(title = "Frecuencia de Registros por Departamento",
+       x = "Departamento",
+       y = "Frecuencia") +
+   scale_y_log10() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +  # Rotate labels
+  scale_fill_manual(values = rainbow(nrow(freq_table)))  # Different colors
+
+
+```
+
+En base a la gráfica mostrada observamos que el mayor registros de divorcios es en el departamento de Guatemala, En el segundo puesto tenemos a Quetzaltenango con 1485 registros de divorcio, Por último se debe de tomar en cuenta que el departamento de Solola ha marcado el menor registro de divorcios.
+
+Con estos datos posiblemente podemos realizar un analisis ante la relación entre el pueblo o etnia de las personas divorciadas y el departamento donde se registró el divorcio.
+
+```{r echo=FALSE}
+freq_table <- as.data.frame(table(datos_decod$MUPREG))
+colnames(freq_table) <- c("MUPREG", "Frecuencia")
+print(head(freq_table))
+
+freq_table <- freq_table %>%
+  arrange(desc(Frecuencia)) %>%
+  head(10)
+
+# Plot with different colors for each category
+ggplot(freq_table, aes(x = reorder(MUPREG, -Frecuencia), y = Frecuencia, fill = MUPREG)) +
+  geom_bar(stat = "identity") +
+  theme_minimal() +
+  labs(title = "Los Municipios con el mayor Registro ",
+       x = "Municipio",
+       y = "Frecuencia") +
+   scale_y_log10() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "none") +  # Rotate labels
+  scale_fill_manual(values = rainbow(nrow(freq_table)))  # Different colors
+
+
+```
+Aunque existan una mayor cantidad de municipios se eligieron los 10 municipios con mayor registros. En primer lugar se obtiene el municipio de Guatemala con un monto total de 23848 registros. En segundo lugar tenemos a Santa Catarina Pinula con un total de 354 registros. Se observa que el rango de numero es de 101 a 110 lo cual tiene sentido debido a que todos los municipios nombreados forman parte de la capital de Guatemala donde es el departamento con mayor registros según la gráfica anterior.
+
+
+## Que departamento es más frecuente en registrar la ocurrencia del divorcio.
+```{r echo=FALSE}
+freq_table <- as.data.frame(table(datos_decod$DEPOCU))
+colnames(freq_table) <- c("DEPOCU", "Frecuencia")
+print(head(freq_table))
+
+# Plot with different colors for each category
+ggplot(freq_table, aes(x = reorder(DEPOCU, -Frecuencia), y = Frecuencia, fill = DEPOCU)) +
+  geom_bar(stat = "identity") +
+  theme_minimal() +
+  labs(title = "Frecuencia de ocurrencias por Departamento",
+       x = "Departamento",
+       y = "Frecuencia") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +  # Rotate labels
+  scale_fill_manual(values = rainbow(nrow(freq_table)))  # Different colors
+
+
+```
+El análisis muestra que el departamento de Guatemala tiene la mayor cantidad de registros de divorcios, lo cual es consistente con su alta población y una mayor cantidad de procesos legales en comparación con otros departamentos. Sin embargo, lo interesante es que la diferencia entre el registro y la ocurrencia de los divorcios sugiere que muchas personas pueden haber pensado en divorciarse en el departamento de Guatemala, pero finalmente formalizaron el proceso en otro departamento.
+
+
+Frecuencia de los municipios con mayor ocurrencia
+```{r echo=FALSE}
+freq_table <- as.data.frame(table(datos_decod$MUPOCU))
+colnames(freq_table) <- c("MUPOCU", "Frecuencia")
+print(head(freq_table))
+
+freq_table <- freq_table %>%
+  arrange(desc(Frecuencia)) %>%
+  head(10)
+
+# Plot with different colors for each category
+ggplot(freq_table, aes(x = reorder(MUPOCU, -Frecuencia), y = Frecuencia, fill = MUPOCU)) +
+  geom_bar(stat = "identity") +
+  theme_minimal() +
+  labs(title = "Los Municipios con el la mayor ocurrencia de divorcio ",
+       x = "Municipio",
+       y = "Frecuencia") +
+   scale_y_log10() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "none") +  # Rotate labels
+  scale_fill_manual(values = rainbow(nrow(freq_table)))  # Different colors
+
+
+```
+
+Se confirma también cómo, en el departamento, tienen diferentes datos los registros y las ocurrencias, lo cual indica que son variables diferentes. Sin embargo, lo que más se observa es que el municipio de Guatemala tiene la mayor frecuencia en la ocurrencia de divorcio.
+
+
+
+## Frecuencia de etnias registrados por Hombre
+```{r echo=FALSE}
+freq_table <- as.data.frame(table(datos_decod$PUEHOM))
+colnames(freq_table) <- c("PUEHOM", "Frecuencia")
+print(freq_table)
+
+# Plot with different colors for each category
+ggplot(freq_table, aes(x = reorder(PUEHOM, -Frecuencia), y = Frecuencia, fill = PUEHOM)) +
+  geom_bar(stat = "identity") +
+  theme_minimal() +
+  labs(title = "Frecuencia de Etnias registrados en el divocrio por Hombre",
+       x = "Etnias (Pueblo) Hombre",
+       y = "Frecuencia") +
+   scale_y_log10() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +  # Rotate labels
+  scale_fill_manual(values = rainbow(nrow(freq_table)))  # Different colors
+
+
+
+```
+
+Se observa que la mayor frecuencia es IGNORADO aunque observamos en el segundo puesto que los Mestizos/Ladinos con un total de 41402 registros, luego estan Maya y la menor frecuencia, se encuentra el pueblo Xinka con un total de 12 registros.
+
+
+## Mujer
+```{r echo=FALSE}
+freq_table <- as.data.frame(table(datos_decod$PUEMUJ))
+colnames(freq_table) <- c("PUEMUJ", "Frecuencia")
+print(freq_table)
+
+# Plot with different colors for each category
+ggplot(freq_table, aes(x = reorder(PUEMUJ, -Frecuencia), y = Frecuencia, fill = PUEMUJ)) +
+  geom_bar(stat = "identity") +
+  theme_minimal() +
+  labs(title = "Frecuencia de Etnias registrados en el divocrio por Mujer",
+       x = "Etnias (Pueblo) Mujer",
+       y = "Frecuencia") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +  # Rotate labels
+   scale_y_log10() +
+  scale_fill_manual(values = rainbow(nrow(freq_table)))  # Different colors
+
+
+```
+
+Se observa que la mayor frecuencia es IGNORADO aunque observamos en el segundo puesto que los Mestizos/Ladinos con un total de 32621 registros, luego estan Maya y la menor frecuencia, se encuentra el pueblo Xinka con un total de 16 registros.
+
+
+## Nacionalidad del Hombre
+```{r echo=FALSE}
+freq_table <- as.data.frame(table(datos_decod$NACHOM))
+colnames(freq_table) <- c("NACHOM", "Frecuencia")
+print(freq_table)
+
+freq_table <- freq_table %>%
+  arrange(desc(Frecuencia)) %>%
+  head(15)
+freq_table <- freq_table %>%
+  filter(NACHOM != "320")  # Removes the row with NACHOM equal to "320"
+
+
+# Plot with different colors for each category
+ggplot(freq_table, aes(x = reorder(NACHOM, -Frecuencia), y = Frecuencia, fill = NACHOM)) +
+  geom_bar(stat = "identity") +
+  theme_minimal() +
+  labs(title = "Frecuencia de nacionalidades por hombre",
+       x = "Nacionalidad",
+       y = "Frecuencia (log scale)") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "none") +  # Rotate labels
+  scale_y_log10() +  # Apply log scale to y-axis
+  scale_fill_manual(values = rainbow(nrow(freq_table)))  # Different colors
+
+```
+
+Tomar nota de que la nacionalidad Guatemala es la más frecuente porque todos los datos estan centrados en Guatemala. Observaremos en las otras nacionalidades, como  Estados Unidos es la tercer variable más frecuente y la segunda variable IGNORADO son las más frecuentes, ya que tienen 327 datos.
+
+
+```{r echo=FALSE}
+freq_table <- as.data.frame(table(datos_decod$NACMUJ))
+colnames(freq_table) <- c("NACMUJ", "Frecuencia")
+print(head(freq_table))
+
+freq_table <- freq_table %>%
+  arrange(desc(Frecuencia)) %>%
+  head(15)
+freq_table <- freq_table %>%
+  filter(NACMUJ != "320")  # Removes the row with NACHOM equal to "320"
+
+
+# Plot with different colors for each category
+ggplot(freq_table, aes(x = reorder(NACMUJ, -Frecuencia), y = Frecuencia, fill = NACMUJ)) +
+  geom_bar(stat = "identity") +
+  theme_minimal() +
+  labs(title = "Frecuencia de nacionalidades por mujer",
+       x = "Nacionalidad",
+       y = "Frecuencia") +
+  scale_y_log10()+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "none") +  # Rotate labels
+  scale_fill_manual(values = rainbow(nrow(freq_table)))  # Different colors
+
+
+```
+Tomar nota de que no se agregó la nacionalidad Guatemala debido a que sabemos que tiene un mayor porcentaje. Solo observaremos las de otras nacionalidades para ver cuál es la más frecuente. Se observa que Estados Unidos es más frecuente que la variable IGNORADO lo cual hace la mayor frecuente nacionalidad.
+
+
+## Exploración de la variable Escolaridad Hombre
+```{r echo=FALSE}
+freq_table <- as.data.frame(table(datos_decod$ESCHOM))
+colnames(freq_table) <- c("ESCHOM", "Frecuencia")
+print(freq_table)
+
+# Plot with different colors for each category
+ggplot(freq_table, aes(x = reorder(ESCHOM, -Frecuencia), y = Frecuencia, fill = ESCHOM)) +
+  geom_bar(stat = "identity") +
+  theme_minimal() +
+  labs(title = "Frecuencia de Escolaridad del Hombre",
+       x = "Departamento",
+       y = "Frecuencia") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +  # Rotate labels
+  scale_fill_manual(values = rainbow(nrow(freq_table)))  # Different colors
+
+
+```
+
+Se observa que la mayor frecuencia corresponde a la variable IGNORADO, lo cual no nos indica si la población está educada o no. Por otro lado, observamos que la variable 'diversificado' (15,951) es la más frecuente y tiene cierta significancia. Otro dato importante a resaltar es que la variable 'ninguno' es la tercera más frecuente, lo cual podríamos relacionar con la causa del divorcio, si esta está vinculada con la educación.
+
+
+```{r echo=FALSE}
+freq_table <- as.data.frame(table(datos_decod$ESCMUJ))
+colnames(freq_table) <- c("ESCMUJ", "Frecuencia")
+print(freq_table)
+
+# Plot with different colors for each category
+ggplot(freq_table, aes(x = reorder(ESCMUJ, -Frecuencia), y = Frecuencia, fill = ESCMUJ)) +
+  geom_bar(stat = "identity") +
+  theme_minimal() +
+  labs(title = "Frecuencia de Escolaridad del Hombre",
+       x = "Departamento",
+       y = "Frecuencia") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +  # Rotate labels
+  scale_fill_manual(values = rainbow(nrow(freq_table)))  # Different colors
+
+
+```
+
+Se observa nuevamente que la mayor frecuencia corresponde a la variable IGNORADO, lo cual no nos indica si la población está educada o no. Por otro lado, observamos que la variable 'diversificado' (15,951) es la más frecuente y tiene cierta significancia. Otro dato importante a resaltar es que la variable 'ninguno' es la tercera más frecuente, lo cual podríamos relacionar con la causa del divorcio, si esta está vinculada con la educación.
+
+## Ocupacion Hombres
+
+
+```{r  warning=FALSE, echo=FALSE}
+replace_with_median <- function(df, column_name) {
+  # Extract the first two digits from the specified column
+  df <- df %>%
+    mutate(!!column_name := as.integer(substr(as.character(!!sym(column_name)), 1, 2))) 
+  
+  # Calculate the median of the transformed column
+  median_value <- median(df[[column_name]], na.rm = TRUE)
+  
+  # Replace NA values with the median
+  df[[column_name]][is.na(df[[column_name]])] <- median_value
+  
+  return(df)
+}
+
+
+datos <- replace_with_median(datos, "CIUOHOM")
+datos <- replace_with_median(datos, "CIUOMUJ")
+
+```
+
+```{r echo=FALSE}
+freq_table <- as.data.frame(table(datos_decod$CIUOHOM))
+colnames(freq_table) <- c("CIUOHOM", "Frecuencia")
+print(freq_table)
+
+freq_table <- freq_table %>%
+  arrange(desc(Frecuencia)) %>%
+  head(10)
+
+# Plot with different colors for each category
+ggplot(freq_table, aes(x = reorder(CIUOHOM, -Frecuencia), y = Frecuencia, fill = CIUOHOM)) +
+  geom_bar(stat = "identity") +
+  theme_minimal() +
+  labs(title = "Frecuencia de Ocupación (trabajo) de las hombre ",
+       x = "Ocupacion",
+       y = "Frecuencia") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 5), legend.position = "none") +  # Rotate labels
+  scale_fill_manual(values = rainbow(nrow(freq_table)))  # Different colors
+
+
+```
+
+```{r echo=FALSE}
+freq_table <- as.data.frame(table(datos_decod$CIUOMUJ))
+colnames(freq_table) <- c("CIUOMUJ", "Frecuencia")
+print(freq_table)
+
+freq_table <- freq_table %>%
+  arrange(desc(Frecuencia)) %>%
+  head(10)
+
+# Plot with different colors for each category
+ggplot(freq_table, aes(x = reorder(CIUOMUJ, -Frecuencia), y = Frecuencia, fill = CIUOMUJ)) +
+  geom_bar(stat = "identity") +
+  theme_minimal() +
+  labs(title = "Frecuencia de Ocupación (trabajo) de las mujeres",
+       x = "Ocupación",
+       y = "Frecuencia") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 5),  # Reduce text size
+        legend.position = "none") +  
+  scale_fill_manual(values = rainbow(nrow(freq_table)))  # Different colors
+
+```
+Se observa que la variable con mayor frecuencia es "No especificado en otro grupo", lo cual puede representar cualquier ocupación no mencionada. Por otro lado, observamos que 99 y 98 corresponden a otra variable que no tiene gran significancia, ya que se clasifica como "Ignorado". Además, se puede notar que el dato 23 tiene relevancia, ya que representa ocupaciones de peones agropecuarios, pesqueros y forestales, siendo uno de los datos más frecuentes.
+
+### Tendencia de agrupamiento y número de clusters
+
+```{r Hopkins and elbow}
+new_datos <- datos[!is.na(datos$AÑOOCU), ]
+
+# 2. Eliminar filas con 999 en EDADHOM o EDADMUJ
+new_datos <- new_datos[!(new_datos$EDADHOM == 999 | new_datos$EDADMUJ == 999), ]
+
+# 3. Convertir todas las columnas a numérico (manejar enteros excedidos)
+for (col_name in names(new_datos)) {
+  if (is.numeric(new_datos[[col_name]])) {
+    new_datos[[col_name]] <- as.numeric(new_datos[[col_name]])
+  }
+}
+
+# 4. Eliminar todas las filas que aun contienen NA o Inf
+new_datos <- new_datos[complete.cases(new_datos) & apply(new_datos, 1, function(row) all(is.finite(row))), ]
+
+# 5. Tendencia al Agrupamiento (Estadístico de Hopkins)
+hopkins_stat <- hopkins(new_datos, m = 100)
+print(paste("Estadístico de Hopkins:", hopkins_stat))
+
+# 6. Método del Codo
+fviz_nbclust(new_datos[1:9000, ], stats::kmeans, method = "wss") +
+  labs(subtitle = "Método del Codo")
+
+```
+
+El estadístico de Hopkins es 1, esto nos indica que los datos están distribuidos uniformemente y no tienen una tendencia significativa a gruparse. De igual forma se realiza el método de codo para analizar cuantos grupos serian óptimos para hacer el clustering, obteniendo un total de dos grupos.
+
+```{r data clustering}
+
+k_optimo <- 2
+
+kmeans <- kmeans(new_datos, centers = k_optimo)
+
+silueta <- silhouette(kmeans$cluster, dist(new_datos))
+
+fviz_silhouette(silueta)
+
+```
+
+Un valor de 0.58 sugiere que la agrupación es moderadamente buena. Los objetos tienden a estar bien agrupados dentro de sus clústeres, pero hay cierta superposición o cercanía a las fronteras de los clústeres. Esto indica que los clústeres son razonablemente distintos, pero no perfectamente separados.
+
+
+```{r group analysis numeric}
+
+new_datos$grupo <- as.factor(kmeans$cluster)
+
+medias_numericas <- aggregate(new_datos[, c("AÑOREG", "AÑOOCU", "EDADHOM", "EDADMUJ")], 
+                               by = list(new_datos$grupo), FUN = mean)
+
+print(medias_numericas)
+
+```
+
+El primer grupo representa eventos que se registran rapidamente después de su ocurrencia, posiblemente indicando un proceso de registro más eficiente o eventos que requieren registro inmediato. EL segundo grupo representa eventos que tienen un retraso entre su ocurrencia y registro, lo opuesto al grupo 1. Las ligeras diferencias en las edades promedio podrían indicar diferentes características demográficas entre los grupos.
+
+### Relaciones entre las variables
+
+```{r var relation}
+numerical_data <- datos_decod[, c("AÑOOCU", "AÑOREG", "EDADHOM", "EDADMUJ")]
+
+corr_matrix <- cor(numerical_data, use = "complete.obs")
+
+corr_melted <- melt(corr_matrix)
+
+ggplot(corr_melted, aes(Var1, Var2, fill = value)) +
+  geom_tile() +
+  scale_fill_gradient2(low = "blue", high = "red", mid = "white", midpoint = 0, limit = c(-1, 1)) +
+  theme_minimal() +
+  labs(title = "Matriz de Correlación", x = "", y = "") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+La matriz de correlación muestra relaciones lineales entre las variables, se revelan fuertes correlaciones positivas entre fechas de registro y ocurrencia, así como entre las edades de hombres y mujeres. Sin embargo, las variables categóricas como pueblos, nacionalidades y escolaridad muestran correlaciones débiles o nulas entre sí y con las variables de fecha y edad, indicando que no hay una relación lineal fuerte.
+
+## Hallazgos y conclusiones
+Se encontro lo siguiente:
+Correlaciones Positivas Fuertes: Se encontraron correlaciones positivas fuertes entre las fechas de registro y las fechas de ocurrencia de los eventos. También existe una correlación positiva fuerte entre las edades de los hombres y las mujeres en el conjunto de datos.
+Correlación Débil o Nula con Variables Categóricas: Las variables categóricas como pueblos, nacionalidades y escolaridad muestran correlaciones débiles o nulas entre sí y con las variables de fecha y edad, lo que sugiere que no hay una relación lineal fuerte entre ellas.
+
+La fuerte correlación entre las fechas de registro y ocurrencia sugiere una relación temporal en los datos, donde el momento de un evento está estrechamente relacionado con el otro.
+
+La correlación entre las edades de hombres y mujeres podría indicar relaciones o patrones dentro de los eventos registrados relacionados con parejas o individuos dentro de un rango de edad similar.
+
+La falta de una fuerte correlación entre las variables categóricas numéricas sugiere que estos diferentes tipos de información podrían ser independientes entre sí. Por otro lado, se podrían necesitar otros métodos para explorar posibles relaciones.
+
 ## Modelado de datos
 
 Para el análisis del dataset de divorcios se tiene planeado usar como variable respuesta la **diferencia de escolaridad entre hombres y mujeres**. Predecir la escolaridad entre hombre y mujer resulta interesante porque permite explorar desigualdades educativas dentro de las parejas, lo cual puede estar relacionado con factores sociocultirales, económicos o regionales. Esta variable puede reflejar patrones de acceso deigual a la educación por género.
